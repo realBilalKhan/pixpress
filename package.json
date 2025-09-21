@@ -1,0 +1,27 @@
+{
+  "name": "pixpress",
+  "version": "1.0.0",
+  "description": "A CLI tool for image manipulation",
+  "main": "index.js",
+  "bin": {
+    "pixpress": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "image",
+    "cli",
+    "manipulation",
+    "resize",
+    "convert",
+    "watermark"
+  ],
+  "author": "M. Bilal Khan <intelligencexempire@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
