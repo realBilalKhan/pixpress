@@ -1,125 +1,93 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import sharp from "sharp";
-import fs from "fs";
+import boxen from "boxen";
+import chalk from "chalk";
+import { resizeCommand } from "./utils/resize.js";
+import { convertCommand } from "./utils/convert.js";
+import { presetCommand } from "./utils/preset.js";
+import { watermarkCommand } from "./utils/watermark.js";
 
 const program = new Command();
 
 program
   .name("pixpress")
-  .description("Simple image manipulation tool")
-  .version("0.1.0");
+  .description("A beginner-friendly CLI tool for image manipulation")
+  .version("1.0.0");
+
+const content = `${chalk.bold.magenta("PixPress")}\nImage Magic Made Easy`;
+
+const banner = boxen(content, {
+  padding: 1,
+  margin: 1,
+  borderStyle: "round",
+  borderColor: "cyan",
+  align: "center",
+  float: "center",
+});
+
+console.log(banner);
 
 // Resize command
 program
   .command("resize <input>")
   .description("Resize an image")
-  .option("-w, --width <width>", "width in pixels")
-  .option("-h, --height <height>", "height in pixels")
-  .option("-o, --output <output>", "output file")
-  .action(async (input, options) => {
-    try {
-      if (!fs.existsSync(input)) {
-        console.error("File not found:", input);
-        process.exit(1);
-      }
-
-      const width = options.width ? parseInt(options.width) : null;
-      const height = options.height ? parseInt(options.height) : null;
-
-      if (!width && !height) {
-        console.error("Please specify width or height");
-        process.exit(1);
-      }
-
-      const output =
-        options.output || input.replace(/(\.[^.]+)$/, "_resized$1");
-
-      console.log("Resizing image...");
-
-      await sharp(input).resize(width, height).toFile(output);
-
-      console.log("✓ Resized successfully:", output);
-    } catch (error) {
-      console.error("Error:", error.message);
-    }
-  });
+  .option("-w, --width <width>", "Target width in pixels")
+  .option("-h, --height <height>", "Target height in pixels")
+  .option("-o, --output <output>", "Output file path")
+  .option("-q, --quality <quality>", "JPEG quality (1-100)", "80")
+  .option(
+    "--fit <fit>",
+    "Resize fit mode: cover, contain, fill, inside, outside",
+    "cover"
+  )
+  .action(resizeCommand);
 
 // Convert command
 program
   .command("convert <input>")
   .description("Convert image format")
-  .requiredOption("-f, --format <format>", "output format (jpg, png, webp)")
-  .option("-o, --output <output>", "output file")
-  .action(async (input, options) => {
-    try {
-      if (!fs.existsSync(input)) {
-        console.error("File not found:", input);
-        process.exit(1);
-      }
+  .requiredOption(
+    "-f, --format <format>",
+    "Output format: jpg, png, webp, tiff, gif, bmp"
+  )
+  .option("-o, --output <output>", "Output file path")
+  .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "80")
+  .action(convertCommand);
 
-      const format = options.format.toLowerCase();
-      const validFormats = ["jpg", "jpeg", "png", "webp"];
-
-      if (!validFormats.includes(format)) {
-        console.error("Unsupported format. Use: jpg, png, webp");
-        process.exit(1);
-      }
-
-      const ext = format === "jpg" ? "jpeg" : format;
-      const output = options.output || input.replace(/\.[^.]+$/, `.${format}`);
-
-      console.log(`Converting to ${format.toUpperCase()}...`);
-
-      let pipeline = sharp(input);
-
-      if (format === "jpg" || format === "jpeg") {
-        pipeline = pipeline.jpeg({ quality: 80 });
-      } else if (format === "png") {
-        pipeline = pipeline.png();
-      } else if (format === "webp") {
-        pipeline = pipeline.webp({ quality: 80 });
-      }
-
-      await pipeline.toFile(output);
-
-      console.log("✓ Converted successfully:", output);
-    } catch (error) {
-      console.error("Error:", error.message);
-    }
-  });
-
-// Thumbnail command
+// Preset command
 program
-  .command("thumbnail <input>")
-  .description("Create a thumbnail")
-  .option("-s, --size <size>", "thumbnail size", "150")
-  .option("-o, --output <output>", "output file")
-  .action(async (input, options) => {
-    try {
-      if (!fs.existsSync(input)) {
-        console.error("File not found:", input);
-        process.exit(1);
-      }
+  .command("preset <input>")
+  .description("Apply image presets")
+  .requiredOption(
+    "-p, --preset <preset>",
+    "Preset name: thumbnail, avatar, banner, social, compress"
+  )
+  .option("-o, --output <output>", "Output file path")
+  .action(presetCommand);
 
-      const size = parseInt(options.size);
-      const output = options.output || input.replace(/(\.[^.]+)$/, "_thumb$1");
+// Watermark command
+program
+  .command("watermark <input>")
+  .description("Add watermark to image")
+  .requiredOption("-w, --watermark <watermark>", "Watermark image path")
+  .option("-o, --output <output>", "Output file path")
+  .option(
+    "-p, --position <position>",
+    "Position: top-left, top-right, bottom-left, bottom-right, center",
+    "bottom-right"
+  )
+  .option("-s, --size <size>", "Watermark size as percentage (10-50)", "20")
+  .option("--opacity <opacity>", "Watermark opacity (0.1-1.0)", "0.8")
+  .action(watermarkCommand);
 
-      console.log("Creating thumbnail...");
+// Configure help display settings
+program.configureHelp({
+  sortSubcommands: true,
+  helpWidth: 80,
+});
 
-      await sharp(input)
-        .resize(size, size, { fit: "cover" })
-        .jpeg({ quality: 85 })
-        .toFile(output);
-
-      console.log("✓ Thumbnail created:", output);
-    } catch (error) {
-      console.error("Error:", error.message);
-    }
-  });
-
-// Show help if no command
+// Show help if no args are provided
 if (process.argv.length === 2) {
   program.help();
 }
