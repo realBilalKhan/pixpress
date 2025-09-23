@@ -12,15 +12,21 @@
 - Preset - Quick presets for common use cases
 - Watermark - Add watermarks with customizable positioning
 
-## Installation
+## Quick Start
 
 ```bash
+# Installation
 npm install -g pixpress
+
+# Interactive Mode (Recommended for Beginners)
+pixpress
 ```
 
-## Usage
+## Command Reference
 
 ### Resize Images
+
+Scale images to specific dimensions with various fit modes.
 
 ```bash
 # Resize to specific width (height auto-calculated)
@@ -49,6 +55,8 @@ pixpress resize input.jpg -w 800 -h 600 --fit contain
 
 ### Convert Formats
 
+Change image formats with optimized settings for each format.
+
 ```bash
 # Convert to WebP
 pixpress convert input.jpg --format webp
@@ -60,9 +68,11 @@ pixpress convert input.png -f jpg -q 85
 pixpress convert input.jpg -f png -o converted.png
 ```
 
-Supported formats: jpg, png, webp, tiff, gif, bmp, avif
+Supported formats: `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
 
 ### Apply Presets
+
+Quick transformations for common use cases.
 
 ```bash
 # Create a thumbnail
@@ -91,6 +101,8 @@ pixpress preset input.jpg --preset compress
 
 ### Add Watermarks
 
+Protect your images with customizable watermarks.
+
 ```bash
 # Add watermark to bottom-right
 pixpress watermark input.jpg --watermark logo.png
@@ -107,13 +119,20 @@ pixpress watermark input.jpg -w logo.png -p center --opacity 0.5 -o watermarked.
 - `top-left`
 - `top-right`
 - `bottom-left`
-- `bottom-right (default)`
+- `bottom-right` (default)
 - `center`
 
-#### Options:
+#### Watermark Options:
 
 - `--size` - Watermark size as percentage (10-50%)
 - `--opacity` - Transparency (0.1-1.0)
+
+### Global Options
+
+All commands support these options:
+
+- `-o, --output <path>` - Custom output file path
+- `-q, --quality <1-100>` - JPEG/WebP quality (default: 80)
 
 ## Requirements
 

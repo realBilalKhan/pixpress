@@ -7,6 +7,7 @@ import { resizeCommand } from "./utils/resize.js";
 import { convertCommand } from "./utils/convert.js";
 import { presetCommand } from "./utils/preset.js";
 import { watermarkCommand } from "./utils/watermark.js";
+import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
 
@@ -81,15 +82,26 @@ program
   .option("--opacity <opacity>", "Watermark opacity (0.1-1.0)", "0.8")
   .action(watermarkCommand);
 
+// Interactive command
+program
+  .command("interactive")
+  .alias("i")
+  .description("Start interactive mode")
+  .action(startInteractiveMode);
+
 // Configure help display settings
 program.configureHelp({
   sortSubcommands: true,
   helpWidth: 80,
 });
 
-// Show help if no args are provided
+// Check if no arguments provided or only the script name
 if (process.argv.length === 2) {
-  program.help();
+  console.log(
+    chalk.blue("💡 No command specified. Starting interactive mode...\n")
+  );
+  startInteractiveMode();
+} else {
+  // Parse command line arguments normally
+  program.parse();
 }
-
-program.parse();

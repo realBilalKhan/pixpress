@@ -1,3 +1,4 @@
+// utils/resize.js
 import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
