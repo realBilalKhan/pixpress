@@ -1,4 +1,4 @@
-<h1 align="center">Chess Arena</h1>
+<h1 align="center">Pixpress</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/node-%3E%3D14.0.0-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js Version">
