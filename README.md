@@ -7,6 +7,7 @@
 
 ## Features
 
+- Info - Analyze image properties and metadata
 - Resize - Scale images to any dimensions
 - Convert - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
 - Preset - Quick presets for common use cases
@@ -23,6 +24,14 @@ pixpress
 ```
 
 ## Command Reference
+
+### Analyze Images
+
+Get detailed information about your images including format, dimensions, compression, and optimization recommendations.
+
+```bash
+pixpress info image.jpg
+```
 
 ### Resize Images
 

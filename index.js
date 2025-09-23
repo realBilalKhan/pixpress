@@ -7,6 +7,7 @@ import { resizeCommand } from "./utils/resize.js";
 import { convertCommand } from "./utils/convert.js";
 import { presetCommand } from "./utils/preset.js";
 import { watermarkCommand } from "./utils/watermark.js";
+import { infoCommand } from "./utils/info.js";
 import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
@@ -28,6 +29,13 @@ const banner = boxen(content, {
 });
 
 console.log(banner);
+
+// Info command
+program
+  .command("info <input>")
+  .description("Display detailed image information and metadata")
+  .option("-v, --verbose", "Show additional technical details")
+  .action(infoCommand);
 
 // Resize command
 program

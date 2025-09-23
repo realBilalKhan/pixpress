@@ -7,6 +7,7 @@ import { resizeCommand } from "./resize.js";
 import { convertCommand } from "./convert.js";
 import { presetCommand } from "./preset.js";
 import { watermarkCommand } from "./watermark.js";
+import { infoCommand } from "./info.js";
 
 // Helper function to validate file existence
 async function validateFilePath(filePath) {
@@ -42,6 +43,10 @@ export async function startInteractiveMode() {
         message: "What would you like to do?",
         choices: [
           {
+            name: "📊 Info - View detailed image information",
+            value: "info",
+          },
+          {
             name: "📏 Resize - Change image dimensions",
             value: "resize",
           },
@@ -71,41 +76,48 @@ export async function startInteractiveMode() {
       },
     ]);
 
-    // Step 3: Operation-specific questions
+    // Step 3: Operation-specific questions (skip for info command)
     let options = {};
 
-    switch (operation) {
-      case "resize":
-        options = await getResizeOptions();
-        break;
-      case "convert":
-        options = await getConvertOptions();
-        break;
-      case "preset":
-        options = await getPresetOptions();
-        break;
-      case "watermark":
-        options = await getWatermarkOptions();
-        break;
+    if (operation !== "info") {
+      switch (operation) {
+        case "resize":
+          options = await getResizeOptions();
+          break;
+        case "convert":
+          options = await getConvertOptions();
+          break;
+        case "preset":
+          options = await getPresetOptions();
+          break;
+        case "watermark":
+          options = await getWatermarkOptions();
+          break;
+      }
+
+      // Step 4: Get output file (optional, not needed for info)
+      const { outputFile } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "outputFile",
+          message: "Output file path (leave empty for auto-generated):",
+        },
+      ]);
+
+      if (outputFile) {
+        options.output = outputFile;
+      }
+
+      console.log(chalk.yellow("\n🚀 Processing your image...\n"));
+    } else {
+      console.log(chalk.yellow("\n📊 Analyzing your image...\n"));
     }
-
-    // Step 4: Get output file (optional)
-    const { outputFile } = await inquirer.prompt([
-      {
-        type: "input",
-        name: "outputFile",
-        message: "Output file path (leave empty for auto-generated):",
-      },
-    ]);
-
-    if (outputFile) {
-      options.output = outputFile;
-    }
-
-    console.log(chalk.yellow("\n🚀 Processing your image...\n"));
 
     // Execute the chosen command
     switch (operation) {
+      case "info":
+        await infoCommand(inputFile, options);
+        break;
       case "resize":
         await resizeCommand(inputFile, options);
         break;
