@@ -8,6 +8,7 @@ import { resizeCommand } from "./resize.js";
 import { convertCommand } from "./convert.js";
 import { presetCommand } from "./preset.js";
 import { watermarkCommand } from "./watermark.js";
+import { rotateCommand } from "./rotate.js";
 import { infoCommand } from "./info.js";
 import { filtersCommand, getAvailableFilters } from "./filters.js";
 import { getSupportedFormats, formatFileSize } from "./helpers.js";
@@ -17,6 +18,7 @@ const supportedOperations = [
   "convert",
   "preset",
   "watermark",
+  "rotate",
   "info",
   "filters",
 ];
@@ -155,6 +157,27 @@ async function validateOperationOptions(operation, options) {
         );
       }
       break;
+    case "rotate":
+      if (
+        !options.angle &&
+        !options.flipH &&
+        !options.horizontal &&
+        !options.flipV &&
+        !options.vertical
+      ) {
+        throw new Error(
+          "Rotate operation requires --angle, --flip-h, or --flip-v"
+        );
+      }
+      if (options.angle) {
+        const angle = parseInt(options.angle);
+        if (angle < -360 || angle > 360) {
+          throw new Error(
+            "Rotation angle must be between -360 and 360 degrees"
+          );
+        }
+      }
+      break;
     case "watermark":
       if (!options.watermark) {
         throw new Error("Watermark operation requires --watermark");
@@ -276,6 +299,21 @@ function displayDryRunResults(imageFiles, operation, options, outputDir) {
     case "preset":
       console.log(chalk.dim(`  • Preset: ${options.preset}`));
       break;
+    case "rotate":
+      const transformations = [];
+      if (options.angle) transformations.push(`rotate ${options.angle}°`);
+      if (options.flipH || options.horizontal)
+        transformations.push("flip horizontally");
+      if (options.flipV || options.vertical)
+        transformations.push("flip vertically");
+      console.log(
+        chalk.dim(`  • Transformations: ${transformations.join(", ")}`)
+      );
+      if (options.background) {
+        console.log(chalk.dim(`  • Background: ${options.background}`));
+      }
+      console.log(chalk.dim(`  • Quality: ${options.quality}%`));
+      break;
     case "watermark":
       console.log(chalk.dim(`  • Watermark: ${options.watermark}`));
       console.log(chalk.dim(`  • Position: ${options.position}`));
@@ -349,6 +387,13 @@ async function processBatch(imageFiles, operation, options, outputDir) {
           case "preset":
             outputFileName = `${baseName}_${options.preset}${currentExt}`;
             break;
+          case "rotate":
+            let suffix = "";
+            if (options.angle) suffix += `_rot${options.angle}`;
+            if (options.flipH || options.horizontal) suffix += "_flipH";
+            if (options.flipV || options.vertical) suffix += "_flipV";
+            outputFileName = `${baseName}${suffix}${currentExt}`;
+            break;
           case "watermark":
             outputFileName = `${baseName}_watermarked${currentExt}`;
             break;
@@ -411,6 +456,9 @@ async function executeOperation(operation, inputPath, options) {
         break;
       case "preset":
         await presetCommand(inputPath, options);
+        break;
+      case "rotate":
+        await rotateCommand(inputPath, options);
         break;
       case "watermark":
         await watermarkCommand(inputPath, options);

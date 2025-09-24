@@ -7,6 +7,7 @@ import { resizeCommand } from "./resize.js";
 import { convertCommand } from "./convert.js";
 import { presetCommand } from "./preset.js";
 import { watermarkCommand } from "./watermark.js";
+import { rotateCommand, getRotationPresets } from "./rotate.js";
 import { infoCommand } from "./info.js";
 import { batchCommand } from "./batch.js";
 import { filtersCommand, getAvailableFilters } from "./filters.js";
@@ -105,6 +106,133 @@ async function getFilterOptions() {
   ]);
 
   return { filter };
+}
+
+// Helper function to get rotation options
+async function getRotateOptions() {
+  const rotationPresets = getRotationPresets();
+  const choices = [];
+
+  // Add common rotations
+  choices.push(new inquirer.Separator(chalk.cyan("--- Common Rotations ---")));
+  rotationPresets.common.forEach((preset) => {
+    choices.push({
+      name: `${preset.name}° - ${preset.description}`,
+      value: { type: "angle", angle: preset.name },
+    });
+  });
+
+  // Add flip options
+  choices.push(new inquirer.Separator(chalk.cyan("--- Flip Operations ---")));
+  rotationPresets.flip.forEach((preset) => {
+    choices.push({
+      name: preset.description,
+      value: { type: "flip", operation: preset.name },
+    });
+  });
+
+  // Add custom angle option
+  choices.push(new inquirer.Separator(chalk.cyan("--- Custom ---")));
+  choices.push({
+    name: "Custom angle (-360° to 360°)",
+    value: { type: "custom" },
+  });
+
+  const { transformationType } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "transformationType",
+      message: "Choose rotation/flip operation:",
+      choices: choices,
+      pageSize: 15,
+    },
+  ]);
+
+  const options = {};
+
+  if (transformationType.type === "angle") {
+    options.angle = transformationType.angle;
+  } else if (transformationType.type === "flip") {
+    switch (transformationType.operation) {
+      case "flip-h":
+        options.flipH = true;
+        break;
+      case "flip-v":
+        options.flipV = true;
+        break;
+      case "flip-both":
+        options.flipH = true;
+        options.flipV = true;
+        break;
+    }
+  } else if (transformationType.type === "custom") {
+    const { customAngle } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "customAngle",
+        message: "Enter rotation angle (-360 to 360 degrees):",
+        validate: (input) => {
+          const num = parseInt(input);
+          return (
+            (num >= -360 && num <= 360) ||
+            "Angle must be between -360 and 360 degrees"
+          );
+        },
+      },
+    ]);
+    options.angle = customAngle;
+  }
+
+  // Ask if they want to combine with flip operations
+  if (options.angle && !options.flipH && !options.flipV) {
+    const { addFlip } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "addFlip",
+        message: "Would you like to add flip operations as well?",
+        default: false,
+      },
+    ]);
+
+    if (addFlip) {
+      const flipOptions = await inquirer.prompt([
+        {
+          type: "checkbox",
+          name: "flips",
+          message: "Select flip operations:",
+          choices: [
+            { name: "Flip horizontally (mirror)", value: "horizontal" },
+            { name: "Flip vertically", value: "vertical" },
+          ],
+        },
+      ]);
+
+      if (flipOptions.flips.includes("horizontal")) {
+        options.flipH = true;
+      }
+      if (flipOptions.flips.includes("vertical")) {
+        options.flipV = true;
+      }
+    }
+  }
+
+  // Quality setting
+  const { quality } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "quality",
+      message: "Image quality (1-100, default 85):",
+      default: "85",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (num >= 1 && num <= 100) || "Quality must be between 1 and 100";
+      },
+    },
+  ]);
+
+  options.quality = quality;
+
+  return options;
 }
 
 // Helper function to get resize options
@@ -344,6 +472,10 @@ async function processSingleImage() {
           value: "convert",
         },
         {
+          name: "🔄 Rotate - Rotate and flip images",
+          value: "rotate",
+        },
+        {
           name: "🎨 Filters - Apply color filters and effects",
           value: "filters",
         },
@@ -379,6 +511,9 @@ async function processSingleImage() {
         break;
       case "convert":
         options = await getConvertOptions();
+        break;
+      case "rotate":
+        options = await getRotateOptions();
         break;
       case "filters":
         options = await getFilterOptions();
@@ -420,6 +555,9 @@ async function processSingleImage() {
     case "convert":
       await convertCommand(inputFile, options);
       break;
+    case "rotate":
+      await rotateCommand(inputFile, options);
+      break;
     case "filters":
       await filtersCommand(inputFile, options);
       break;
@@ -453,6 +591,10 @@ async function processBatchImages() {
         {
           name: "🔄 Convert - Convert all images to a different format",
           value: "convert",
+        },
+        {
+          name: "🔄 Rotate - Rotate/flip all images the same way",
+          value: "rotate",
         },
         {
           name: "🎨 Filters - Apply color filters and effects to all images",
@@ -510,6 +652,9 @@ async function processBatchImages() {
       break;
     case "convert":
       operationOptions = await getConvertOptions();
+      break;
+    case "rotate":
+      operationOptions = await getRotateOptions();
       break;
     case "filters":
       operationOptions = await getFilterOptions();

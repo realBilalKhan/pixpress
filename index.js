@@ -7,6 +7,7 @@ import { resizeCommand } from "./utils/resize.js";
 import { convertCommand } from "./utils/convert.js";
 import { presetCommand } from "./utils/preset.js";
 import { watermarkCommand } from "./utils/watermark.js";
+import { rotateCommand } from "./utils/rotate.js";
 import { infoCommand } from "./utils/info.js";
 import { batchCommand } from "./utils/batch.js";
 import { filtersCommand, listFilters } from "./utils/filters.js";
@@ -66,6 +67,38 @@ program
   .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "80")
   .option("--filter <filter>", "Apply color filter during conversion")
   .action(convertCommand);
+
+// Rotate command
+program
+  .command("rotate <input>")
+  .description("Rotate and flip images")
+  .option("-a, --angle <angle>", "Rotation angle in degrees (-360 to 360)")
+  .option("--flip-h, --horizontal", "Flip horizontally (mirror)")
+  .option("--flip-v, --vertical", "Flip vertically")
+  .option("-o, --output <output>", "Output file path")
+  .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "85")
+  .option(
+    "--background <color>",
+    "Background color for exposed areas (hex or rgba)",
+    "#FFFFFF00"
+  )
+  .action((input, options) => {
+    if (
+      !options.angle &&
+      !options.flipH &&
+      !options.horizontal &&
+      !options.flipV &&
+      !options.vertical
+    ) {
+      console.error(
+        chalk.red("Error: At least one transformation is required")
+      );
+      console.log(chalk.dim("Usage: pixpress rotate <input> [options]"));
+      console.log(chalk.dim("Options: --angle <degrees>, --flip-h, --flip-v"));
+      process.exit(1);
+    }
+    rotateCommand(input, options);
+  });
 
 // Filters command
 program
@@ -166,6 +199,15 @@ program
     "20"
   )
   .option("--opacity <opacity>", "Watermark opacity (for watermark)", "0.8")
+  // Rotate options
+  .option("-a, --angle <angle>", "Rotation angle in degrees (for rotate)")
+  .option("--flip-h, --horizontal", "Flip horizontally (for rotate)")
+  .option("--flip-v, --vertical", "Flip vertically (for rotate)")
+  .option(
+    "--background <color>",
+    "Background color for rotation (for rotate)",
+    "#FFFFFF00"
+  )
   .action(batchCommand);
 
 // Interactive command
@@ -195,6 +237,15 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Convert to WebP format")}
   pixpress convert photo.jpg -f webp
 
+  ${chalk.dim("# Rotate image 90 degrees clockwise")}
+  pixpress rotate photo.jpg --angle 90
+
+  ${chalk.dim("# Flip image horizontally")}
+  pixpress rotate photo.jpg --flip-h
+
+  ${chalk.dim("# Rotate and flip in one command")}
+  pixpress rotate photo.jpg --angle 180 --flip-v
+
   ${chalk.dim("# Apply black and white filter")}
   pixpress filters photo.jpg --filter grayscale
 
@@ -210,6 +261,9 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Add watermark")}
   pixpress watermark photo.jpg -w logo.png
 
+  ${chalk.dim("# Batch rotate all images 90 degrees")}
+  pixpress batch rotate ./photos --angle 90
+
   ${chalk.dim("# Batch apply sepia filter to all images")}
   pixpress batch filters ./photos --filter sepia
 
@@ -218,11 +272,14 @@ ${chalk.yellow("Examples:")}
 
 ${chalk.cyan("Available Operations:")}
   ${chalk.dim(
-    "info, resize, convert, filters, preset, watermark, batch, interactive"
+    "info, resize, convert, rotate, filters, preset, watermark, batch, interactive"
   )}
 
 ${chalk.cyan("Popular Color Filters:")}
   ${chalk.dim("grayscale, sepia, vintage, cool, warm, dramatic, soft, vivid")}
+
+${chalk.cyan("Common Rotations:")}
+  ${chalk.dim("90° (clockwise), -90° (counter-clockwise), 180° (upside-down)")}
 `
 );
 

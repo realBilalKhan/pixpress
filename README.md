@@ -10,6 +10,7 @@
 - Info - Analyze image properties and metadata
 - Resize - Scale images to any dimensions
 - Convert - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
+- Rotate - Rotate and flip images with precise control
 - Filters - Apply color filters and artistic effects
 - Preset - Quick presets for common use cases
 - Watermark - Add watermarks with customizable positioning
@@ -80,6 +81,41 @@ pixpress convert input.jpg -f png -o converted.png
 ```
 
 Supported formats: `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
+
+### Rotate & Flip Images
+
+Transform images with precise rotation and flipping controls.
+
+```bash
+# Rotate 90 degrees clockwise
+pixpress rotate input.jpg --angle 90
+
+# Rotate counter-clockwise
+pixpress rotate input.jpg --angle -90
+
+# Flip horizontally (mirror)
+pixpress rotate input.jpg --flip-h
+
+# Flip vertically (upside-down)
+pixpress rotate input.jpg --flip-v
+
+# Combine rotation and flip
+pixpress rotate input.jpg --angle 180 --flip-h
+
+# Custom angle with quality setting
+pixpress rotate input.jpg -a 45 -q 90 -o rotated.jpg
+
+# Custom background for exposed areas
+pixpress rotate input.jpg --angle 30 --background "#FF000000"
+```
+
+#### Rotation Options:
+
+- `--angle <degrees>` - Rotation angle (-360 to 360 degrees)
+- `--flip-h, --horizontal` - Flip horizontally (mirror effect)
+- `--flip-v, --vertical` - Flip vertically
+- `--background <color>` - Background color for exposed areas (default: transparent)
+- `--quality <1-100>` - Output quality for JPEG/WebP
 
 ### Apply Color Filters & Effects
 
