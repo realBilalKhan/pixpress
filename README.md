@@ -12,6 +12,7 @@
 - Convert - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
 - Preset - Quick presets for common use cases
 - Watermark - Add watermarks with customizable positioning
+- Batch Processing - Process entire folders of images at once
 
 ## Quick Start
 
@@ -136,7 +137,59 @@ pixpress watermark input.jpg -w logo.png -p center --opacity 0.5 -o watermarked.
 - `--size` - Watermark size as percentage (10-50%)
 - `--opacity` - Transparency (0.1-1.0)
 
-### Global Options
+### Batch Processing
+
+Process entire folders of images with a single command. All operations support batch processing.
+
+```bash
+# Resize all images in a folder
+pixpress batch resize ./photos --width 800 --height 600
+
+# Convert all images to WebP
+pixpress batch convert ./images --format webp --quality 80
+
+# Apply preset to all images
+pixpress batch preset ./gallery --preset thumbnail
+
+# Add watermark to all images
+pixpress batch watermark ./photos --watermark logo.png
+
+# Analyze all images in a folder
+pixpress batch info ./images
+```
+
+#### Advanced Batch Options
+
+```bash
+# Process folders recursively
+pixpress batch resize ./photos --recursive --width 1200
+
+# Custom output folder
+pixpress batch convert ./images --format jpg --output ./converted
+
+# Include only specific file types
+pixpress batch convert ./mixed --format webp --include "*.png,*.tiff"
+
+# Exclude certain patterns
+pixpress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
+
+# Preview what will be processed (dry run)
+pixpress batch convert ./images --format webp --dry-run
+
+# Show detailed progress for each file
+pixpress batch preset ./gallery --preset social --verbose
+```
+
+#### Batch Processing Options:
+
+- `-r, --recursive` - Process subfolders recursively
+- `-o, --output <folder>` - Output folder (default: ./processed)
+- `--include <pattern>` - File patterns to include (e.g., .jpg,.png)
+- `--exclude <pattern>` - File patterns to exclude
+- `--dry-run` - Preview without processing
+- `-v, --verbose` - Show detailed progress
+
+## Global Options
 
 All commands support these options:
 

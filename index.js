@@ -8,6 +8,7 @@ import { convertCommand } from "./utils/convert.js";
 import { presetCommand } from "./utils/preset.js";
 import { watermarkCommand } from "./utils/watermark.js";
 import { infoCommand } from "./utils/info.js";
+import { batchCommand } from "./utils/batch.js";
 import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
@@ -89,6 +90,44 @@ program
   .option("-s, --size <size>", "Watermark size as percentage (10-50)", "20")
   .option("--opacity <opacity>", "Watermark opacity (0.1-1.0)", "0.8")
   .action(watermarkCommand);
+
+// Batch processing command
+program
+  .command("batch <operation> <folder>")
+  .description("Batch process all images in a folder")
+  .option("-o, --output <output>", "Output folder (default: ./processed)")
+  .option("-r, --recursive", "Process subfolders recursively")
+  .option(
+    "--include <pattern>",
+    "File pattern to include (e.g., *.jpg,*.png)",
+    "*.jpg,*.jpeg,*.png,*.webp,*.tiff,*.gif,*.bmp"
+  )
+  .option("--exclude <pattern>", "File pattern to exclude")
+  .option("--dry-run", "Show what would be processed without doing it")
+  .option("-v, --verbose", "Show detailed progress")
+  // Resize options
+  .option("-w, --width <width>", "Target width in pixels (for resize)")
+  .option("-h, --height <height>", "Target height in pixels (for resize)")
+  .option("--fit <fit>", "Resize fit mode (for resize)", "cover")
+  // Convert options
+  .option("-f, --format <format>", "Output format (for convert)")
+  .option("-q, --quality <quality>", "Quality 1-100 (for convert/resize)", "80")
+  // Preset options
+  .option("-p, --preset <preset>", "Preset name (for preset)")
+  // Watermark options
+  .option("--watermark <watermark>", "Watermark image path (for watermark)")
+  .option(
+    "--position <position>",
+    "Watermark position (for watermark)",
+    "bottom-right"
+  )
+  .option(
+    "-s, --size <size>",
+    "Watermark size percentage (for watermark)",
+    "20"
+  )
+  .option("--opacity <opacity>", "Watermark opacity (for watermark)", "0.8")
+  .action(batchCommand);
 
 // Interactive command
 program
