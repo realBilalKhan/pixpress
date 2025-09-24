@@ -10,6 +10,7 @@
 - Info - Analyze image properties and metadata
 - Resize - Scale images to any dimensions
 - Convert - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
+- Filters - Apply color filters and artistic effects
 - Preset - Quick presets for common use cases
 - Watermark - Add watermarks with customizable positioning
 - Batch Processing - Process entire folders of images at once
@@ -79,6 +80,27 @@ pixpress convert input.jpg -f png -o converted.png
 ```
 
 Supported formats: `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
+
+### Apply Color Filters & Effects
+
+Transform your images with artistic color filters and effects.
+
+```bash
+# Apply black and white filter
+pixpress filters input.jpg --filter grayscale
+
+# Apply sepia tone effect
+pixpress filters input.jpg --filter sepia
+
+# Apply vintage film look
+pixpress filters input.jpg --filter vintage
+
+# Custom output path and quality
+pixpress filters input.jpg -f cool -o cool_photo.jpg -q 90
+
+# List all available filters
+pixpress filters --list
+```
 
 ### Apply Presets
 

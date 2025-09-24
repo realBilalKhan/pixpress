@@ -9,6 +9,7 @@ import { presetCommand } from "./preset.js";
 import { watermarkCommand } from "./watermark.js";
 import { infoCommand } from "./info.js";
 import { batchCommand } from "./batch.js";
+import { filtersCommand, getAvailableFilters } from "./filters.js";
 
 // Helper function to validate file existence
 async function validateFilePath(filePath) {
@@ -68,6 +69,42 @@ async function getPresetOptions() {
   ]);
 
   return { preset };
+}
+
+// Helper function to get filter options
+async function getFilterOptions() {
+  const availableFilters = getAvailableFilters();
+  const choices = [];
+
+  Object.entries(availableFilters).forEach(([category, filters]) => {
+    choices.push(
+      new inquirer.Separator(
+        chalk.cyan(
+          `--- ${category.charAt(0).toUpperCase() + category.slice(1)} ---`
+        )
+      )
+    );
+    filters.forEach((filter) => {
+      const aliases =
+        filter.aliases.length > 0 ? ` (${filter.aliases.join(", ")})` : "";
+      choices.push({
+        name: `${filter.name}${aliases} - ${filter.description}`,
+        value: filter.name,
+      });
+    });
+  });
+
+  const { filter } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "filter",
+      message: "Choose a color filter or effect:",
+      choices: choices,
+      pageSize: 20,
+    },
+  ]);
+
+  return { filter };
 }
 
 // Helper function to get resize options
@@ -161,7 +198,19 @@ async function getConvertOptions() {
         return (num >= 1 && num <= 100) || "Quality must be between 1 and 100";
       },
     },
+    {
+      type: "confirm",
+      name: "applyFilter",
+      message: "Would you like to apply a color filter during conversion?",
+      default: false,
+    },
   ]);
+
+  // If user wants to apply a filter, get filter options
+  if (answers.applyFilter) {
+    const filterOptions = await getFilterOptions();
+    answers.filter = filterOptions.filter;
+  }
 
   return answers;
 }
@@ -295,6 +344,10 @@ async function processSingleImage() {
           value: "convert",
         },
         {
+          name: "🎨 Filters - Apply color filters and effects",
+          value: "filters",
+        },
+        {
           name: "⚡ Preset - Apply quick presets",
           value: "preset",
         },
@@ -326,6 +379,9 @@ async function processSingleImage() {
         break;
       case "convert":
         options = await getConvertOptions();
+        break;
+      case "filters":
+        options = await getFilterOptions();
         break;
       case "preset":
         options = await getPresetOptions();
@@ -364,6 +420,9 @@ async function processSingleImage() {
     case "convert":
       await convertCommand(inputFile, options);
       break;
+    case "filters":
+      await filtersCommand(inputFile, options);
+      break;
     case "preset":
       await presetCommand(inputFile, options);
       break;
@@ -394,6 +453,10 @@ async function processBatchImages() {
         {
           name: "🔄 Convert - Convert all images to a different format",
           value: "convert",
+        },
+        {
+          name: "🎨 Filters - Apply color filters and effects to all images",
+          value: "filters",
         },
         {
           name: "⚡ Preset - Apply the same preset to all images",
@@ -447,6 +510,9 @@ async function processBatchImages() {
       break;
     case "convert":
       operationOptions = await getConvertOptions();
+      break;
+    case "filters":
+      operationOptions = await getFilterOptions();
       break;
     case "preset":
       operationOptions = await getPresetOptions();

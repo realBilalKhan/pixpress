@@ -9,6 +9,7 @@ import { convertCommand } from "./convert.js";
 import { presetCommand } from "./preset.js";
 import { watermarkCommand } from "./watermark.js";
 import { infoCommand } from "./info.js";
+import { filtersCommand, getAvailableFilters } from "./filters.js";
 import { getSupportedFormats, formatFileSize } from "./helpers.js";
 
 const supportedOperations = [
@@ -17,6 +18,7 @@ const supportedOperations = [
   "preset",
   "watermark",
   "info",
+  "filters",
 ];
 
 export async function batchCommand(operation, folder, options = {}) {
@@ -112,6 +114,25 @@ async function validateOperationOptions(operation, options) {
           `Unsupported format: ${
             options.format
           }. Supported: ${supportedFormats.join(", ")}`
+        );
+      }
+      break;
+    case "filters":
+      if (!options.filter) {
+        throw new Error("Filters operation requires --filter");
+      }
+      // Get all available filter names for validation
+      const availableFilters = getAvailableFilters();
+      const allFilterNames = [];
+      Object.values(availableFilters).forEach((category) => {
+        category.forEach((filter) => {
+          allFilterNames.push(filter.name);
+          allFilterNames.push(...filter.aliases);
+        });
+      });
+      if (!allFilterNames.includes(options.filter.toLowerCase())) {
+        throw new Error(
+          `Unknown filter: ${options.filter}. Use 'pixpress filters --list' to see available filters.`
         );
       }
       break;
@@ -244,6 +265,13 @@ function displayDryRunResults(imageFiles, operation, options, outputDir) {
         chalk.dim(`  • Target format: ${options.format.toUpperCase()}`)
       );
       console.log(chalk.dim(`  • Quality: ${options.quality}%`));
+      if (options.filter) {
+        console.log(chalk.dim(`  • Color filter: ${options.filter}`));
+      }
+      break;
+    case "filters":
+      console.log(chalk.dim(`  • Filter: ${options.filter}`));
+      console.log(chalk.dim(`  • Quality: ${options.quality}%`));
       break;
     case "preset":
       console.log(chalk.dim(`  • Preset: ${options.preset}`));
@@ -315,6 +343,9 @@ async function processBatch(imageFiles, operation, options, outputDir) {
           case "convert":
             outputFileName = `${baseName}.${options.format}`;
             break;
+          case "filters":
+            outputFileName = `${baseName}_${options.filter}${currentExt}`;
+            break;
           case "preset":
             outputFileName = `${baseName}_${options.preset}${currentExt}`;
             break;
@@ -374,6 +405,9 @@ async function executeOperation(operation, inputPath, options) {
         break;
       case "convert":
         await convertCommand(inputPath, options);
+        break;
+      case "filters":
+        await filtersCommand(inputPath, options);
         break;
       case "preset":
         await presetCommand(inputPath, options);

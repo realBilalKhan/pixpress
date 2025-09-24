@@ -9,6 +9,7 @@ import { presetCommand } from "./utils/preset.js";
 import { watermarkCommand } from "./utils/watermark.js";
 import { infoCommand } from "./utils/info.js";
 import { batchCommand } from "./utils/batch.js";
+import { filtersCommand, listFilters } from "./utils/filters.js";
 import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
@@ -63,7 +64,43 @@ program
   )
   .option("-o, --output <output>", "Output file path")
   .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "80")
+  .option("--filter <filter>", "Apply color filter during conversion")
   .action(convertCommand);
+
+// Filters command
+program
+  .command("filters [input]")
+  .description("Apply color filters and effects to images")
+  .option("-f, --filter <filter>", "Color filter to apply")
+  .option("-o, --output <output>", "Output file path")
+  .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "85")
+  .option("-l, --list", "List all available filters")
+  .action((input, options) => {
+    if (options.list) {
+      listFilters();
+      return;
+    }
+
+    if (!input) {
+      console.error(chalk.red("Error: Input image path is required"));
+      console.log(
+        chalk.dim("Usage: pixpress filters <input> --filter <filter-name>")
+      );
+      console.log(chalk.dim("Use --list to see available filters"));
+      process.exit(1);
+    }
+
+    if (!options.filter) {
+      console.error(chalk.red("Error: Filter is required"));
+      console.log(
+        chalk.dim("Usage: pixpress filters <input> --filter <filter-name>")
+      );
+      console.log(chalk.dim("Use --list to see available filters"));
+      process.exit(1);
+    }
+
+    filtersCommand(input, options);
+  });
 
 // Preset command
 program
@@ -112,6 +149,8 @@ program
   // Convert options
   .option("-f, --format <format>", "Output format (for convert)")
   .option("-q, --quality <quality>", "Quality 1-100 (for convert/resize)", "80")
+  // Filter options
+  .option("--filter <filter>", "Color filter to apply (for filters)")
   // Preset options
   .option("-p, --preset <preset>", "Preset name (for preset)")
   // Watermark options
@@ -141,6 +180,51 @@ program.configureHelp({
   sortSubcommands: true,
   helpWidth: 80,
 });
+
+// Add custom help text
+program.addHelpText(
+  "after",
+  `
+${chalk.yellow("Examples:")}
+  ${chalk.dim("# View image information")}
+  pixpress info photo.jpg
+
+  ${chalk.dim("# Resize image to 800x600")}
+  pixpress resize photo.jpg -w 800 -h 600
+
+  ${chalk.dim("# Convert to WebP format")}
+  pixpress convert photo.jpg -f webp
+
+  ${chalk.dim("# Apply black and white filter")}
+  pixpress filters photo.jpg --filter grayscale
+
+  ${chalk.dim("# List available color filters")}
+  pixpress filters --list
+
+  ${chalk.dim("# Apply vintage filter during format conversion")}
+  pixpress convert photo.jpg -f jpg --filter vintage
+
+  ${chalk.dim("# Apply thumbnail preset")}
+  pixpress preset photo.jpg -p thumbnail
+
+  ${chalk.dim("# Add watermark")}
+  pixpress watermark photo.jpg -w logo.png
+
+  ${chalk.dim("# Batch apply sepia filter to all images")}
+  pixpress batch filters ./photos --filter sepia
+
+  ${chalk.dim("# Interactive mode (guided process)")}
+  pixpress interactive
+
+${chalk.cyan("Available Operations:")}
+  ${chalk.dim(
+    "info, resize, convert, filters, preset, watermark, batch, interactive"
+  )}
+
+${chalk.cyan("Popular Color Filters:")}
+  ${chalk.dim("grayscale, sepia, vintage, cool, warm, dramatic, soft, vivid")}
+`
+);
 
 // Check if no arguments provided or only the script name
 if (process.argv.length === 2) {
