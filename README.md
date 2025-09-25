@@ -7,14 +7,14 @@
 
 ## Features
 
-- Info - Analyze image properties and metadata
-- Resize - Scale images to any dimensions
-- Convert - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
-- Rotate - Rotate and flip images with precise control
-- Filters - Apply color filters and artistic effects
-- Preset - Quick presets for common use cases
-- Watermark - Add watermarks with customizable positioning
-- Batch Processing - Process entire folders of images at once
+- **Info** - Analyze image properties, metadata, and color distribution
+- **Resize** - Scale images to any dimensions
+- **Convert** - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
+- **Rotate** - Rotate and flip images with precise control
+- **Filters** - Apply color filters and artistic effects
+- **Preset** - Quick presets for common use cases
+- **Watermark** - Add watermarks with customizable positioning
+- **Batch Processing** - Process entire folders of images at once
 
 ## Quick Start
 
@@ -30,10 +30,14 @@ pixpress
 
 ### Analyze Images
 
-Get detailed information about your images including format, dimensions, compression, and optimization recommendations.
+Get comprehensive information about your images including format, dimensions, compression, color analysis, and optimization recommendations.
 
 ```bash
+# Basic image analysis
 pixpress info image.jpg
+
+# Detailed analysis with histogram visualization
+pixpress info image.jpg --verbose
 ```
 
 ### Resize Images
@@ -206,14 +210,17 @@ pixpress batch resize ./photos --width 800 --height 600
 # Convert all images to WebP
 pixpress batch convert ./images --format webp --quality 80
 
+# Apply color filter to all images
+pixpress batch filters ./photos --filter vintage
+
 # Apply preset to all images
 pixpress batch preset ./gallery --preset thumbnail
 
 # Add watermark to all images
 pixpress batch watermark ./photos --watermark logo.png
 
-# Analyze all images in a folder
-pixpress batch info ./images
+# Analyze all images in a folder with detailed color analysis
+pixpress batch info ./images --verbose
 ```
 
 #### Advanced Batch Options
@@ -229,7 +236,7 @@ pixpress batch convert ./images --format jpg --output ./converted
 pixpress batch convert ./mixed --format webp --include "*.png,*.tiff"
 
 # Exclude certain patterns
-pixpress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
+pixress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
 
 # Preview what will be processed (dry run)
 pixpress batch convert ./images --format webp --dry-run
