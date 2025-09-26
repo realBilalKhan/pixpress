@@ -11,6 +11,7 @@ import { rotateCommand } from "./utils/rotate.js";
 import { infoCommand } from "./utils/info.js";
 import { batchCommand } from "./utils/batch.js";
 import { filtersCommand, listFilters } from "./utils/filters.js";
+import { collageCommand, listLayouts } from "./utils/collage.js";
 import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
@@ -135,6 +136,65 @@ program
     filtersCommand(input, options);
   });
 
+// Collage command
+program
+  .command("collage [input]")
+  .description("Create photo collages and montages from multiple images")
+  .option(
+    "-l, --layout <layout>",
+    "Layout type: grid, strip, polaroid, mosaic, filmstrip, magazine"
+  )
+  .option("-w, --width <width>", "Canvas width in pixels", "1920")
+  .option("-h, --height <height>", "Canvas height in pixels", "1080")
+  .option("-o, --output <output>", "Output file path")
+  .option("-f, --format <format>", "Output format: jpg, png, webp", "jpg")
+  .option("-q, --quality <quality>", "JPEG/WebP quality (1-100)", "85")
+  .option("-s, --spacing <spacing>", "Spacing between images in pixels", "10")
+  .option(
+    "--background <color>",
+    "Background color (hex, rgb, or name)",
+    "#FFFFFF"
+  )
+  // Grid layout options
+  .option("--cols <cols>", "Number of columns for grid layout")
+  .option("--fit <fit>", "Image fit mode: cover, contain, fill", "cover")
+  // Strip layout options
+  .option(
+    "--direction <direction>",
+    "Strip direction: horizontal, vertical",
+    "horizontal"
+  )
+  // General options
+  .option("--shuffle", "Randomly shuffle input images")
+  .option("--max-files <max>", "Maximum number of images to use")
+  .option("--list-layouts", "List all available layouts")
+  .action((input, options) => {
+    if (options.listLayouts) {
+      listLayouts();
+      return;
+    }
+
+    if (!input) {
+      console.error(chalk.red("Error: Input image path or folder is required"));
+      console.log(
+        chalk.dim("Usage: pixpress collage <input> --layout <layout>")
+      );
+      console.log(chalk.dim("Use --list-layouts to see available options"));
+      process.exit(1);
+    }
+
+    if (!options.layout) {
+      console.error(chalk.red("Error: Layout is required"));
+      console.log(
+        chalk.dim("Usage: pixpress collage <input> --layout <layout>")
+      );
+      console.log(chalk.dim("Use --list-layouts to see available options"));
+      process.exit(1);
+    }
+
+    collageCommand(input, options);
+  });
+
 // Preset command
 program
   .command("preset <input>")
@@ -208,6 +268,11 @@ program
     "Background color for rotation (for rotate)",
     "#FFFFFF00"
   )
+  // Collage options
+  .option("--layout <layout>", "Collage layout (for collage)")
+  .option("--cols <cols>", "Grid columns (for collage)")
+  .option("--direction <direction>", "Strip direction (for collage)")
+  .option("--shuffle", "Shuffle images (for collage)")
   .action(batchCommand);
 
 // Interactive command
@@ -261,6 +326,21 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Add watermark")}
   pixpress watermark photo.jpg -w logo.png
 
+  ${chalk.dim("# Create a 3x3 photo grid")}
+  pixpress collage ./vacation-photos --layout grid --cols 3
+
+  ${chalk.dim("# Create polaroid-style scattered layout")}
+  pixpress collage img1.jpg,img2.jpg,img3.jpg --layout polaroid
+
+  ${chalk.dim("# Create horizontal filmstrip from folder")}
+  pixpress collage ./photos --layout filmstrip --shuffle
+
+  ${chalk.dim("# Create magazine-style layout with custom size")}
+  pixpress collage ./portraits --layout magazine --width 1200 --height 800
+
+  ${chalk.dim("# List available collage layouts")}
+  pixpress collage --list-layouts
+
   ${chalk.dim("# Batch rotate all images 90 degrees")}
   pixpress batch rotate ./photos --angle 90
 
@@ -272,7 +352,7 @@ ${chalk.yellow("Examples:")}
 
 ${chalk.cyan("Available Operations:")}
   ${chalk.dim(
-    "info, resize, convert, rotate, filters, preset, watermark, batch, interactive"
+    "info, resize, convert, rotate, filters, preset, watermark, collage, batch, interactive"
   )}
 
 ${chalk.cyan("Popular Color Filters:")}
@@ -280,6 +360,9 @@ ${chalk.cyan("Popular Color Filters:")}
 
 ${chalk.cyan("Common Rotations:")}
   ${chalk.dim("90° (clockwise), -90° (counter-clockwise), 180° (upside-down)")}
+
+${chalk.cyan("Collage Layouts:")}
+  ${chalk.dim("grid, strip, polaroid, mosaic, filmstrip, magazine")}
 `
 );
 

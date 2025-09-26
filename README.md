@@ -12,6 +12,7 @@
 - **Convert** - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
 - **Rotate** - Rotate and flip images with precise control
 - **Filters** - Apply color filters and artistic effects
+- **Collage** - Create photo collages with multiple layout options
 - **Preset** - Quick presets for common use cases
 - **Watermark** - Add watermarks with customizable positioning
 - **Batch Processing** - Process entire folders of images at once
@@ -24,6 +25,11 @@ npm install -g pixpress
 
 # Interactive Mode (Recommended for Beginners)
 pixpress
+
+# Or use specific commands directly
+pixpress info photo.jpg
+pixpress resize photo.jpg --width 800
+pixpress collage ./vacation-photos --layout grid
 ```
 
 ## Command Reference
@@ -82,9 +88,12 @@ pixpress convert input.png -f jpg -q 85
 
 # Convert with custom output path
 pixpress convert input.jpg -f png -o converted.png
+
+# Apply filter during conversion
+pixpress convert input.jpg -f jpg --filter vintage
 ```
 
-Supported formats: `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
+**Supported formats:** `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
 
 ### Rotate & Flip Images
 
@@ -142,6 +151,52 @@ pixpress filters input.jpg -f cool -o cool_photo.jpg -q 90
 pixpress filters --list
 ```
 
+**Available filters:** `grayscale`, `sepia`, `negative`, `cool`, `warm`, `vintage`, `polaroid`, `dramatic`, `soft`, `dark`, `bright`, `vivid`, `muted`, `noir`, `retro`, `cyberpunk`
+
+### Create Photo Collages
+
+Combine multiple images into beautiful collages with various layout options.
+
+```bash
+# Create a 3x3 photo grid from folder
+pixpress collage ./vacation-photos --layout grid --cols 3
+
+# Create polaroid-style scattered layout
+pixpress collage img1.jpg,img2.jpg,img3.jpg --layout polaroid
+
+# Create horizontal filmstrip with shuffle
+pixpress collage ./photos --layout filmstrip --shuffle
+
+# Magazine-style layout with custom dimensions
+pixpress collage ./portraits --layout magazine --width 1200 --height 800
+
+# Vertical photo strip
+pixpress collage ./memories --layout strip --direction vertical
+
+# Custom spacing and background
+pixpress collage ./family --layout grid --spacing 20 --background "#F0F0F0"
+
+# List available layouts
+pixpress collage --list-layouts
+```
+
+**Available layouts:** `grid` (equal-sized cells), `strip` (horizontal/vertical), `polaroid` (scattered with rotation), `mosaic` (irregular sizes), `filmstrip` (vintage perforations), `magazine` (featured image + grid)
+
+#### Collage Options:
+
+- `--layout <name>` - Layout type (required)
+- `--width <pixels>` - Canvas width (default: 1920)
+- `--height <pixels>` - Canvas height (default: 1080)
+- `--spacing <pixels>` - Space between images (default: 10)
+- `--background <color>` - Background color (hex, RGB, or name)
+- `--format <format>` - Output format: jpg, png, webp (default: jpg)
+- `--quality <1-100>` - JPEG/WebP quality (default: 85)
+- `--shuffle` - Randomly shuffle input images
+- `--max-files <number>` - Limit number of images to use
+- `--cols <number>` - Grid columns (grid layout only)
+- `--direction <direction>` - Strip direction: horizontal/vertical
+- `--fit <mode>` - Image fit mode: cover, contain, fill
+
 ### Apply Presets
 
 Quick transformations for common use cases.
@@ -188,11 +243,7 @@ pixpress watermark input.jpg -w logo.png -p center --opacity 0.5 -o watermarked.
 
 #### Watermark positions:
 
-- `top-left`
-- `top-right`
-- `bottom-left`
-- `bottom-right` (default)
-- `center`
+- `top-left`, `top-right`, `bottom-left`, `bottom-right` (default), `center`
 
 #### Watermark Options:
 
@@ -213,14 +264,17 @@ pixpress batch convert ./images --format webp --quality 80
 # Apply color filter to all images
 pixpress batch filters ./photos --filter vintage
 
+# Create collages from subfolders
+pixpress batch collage ./events --layout grid --cols 3
+
 # Apply preset to all images
 pixpress batch preset ./gallery --preset thumbnail
 
 # Add watermark to all images
 pixpress batch watermark ./photos --watermark logo.png
 
-# Analyze all images in a folder with detailed color analysis
-pixpress batch info ./images --verbose
+# Rotate all images 90 degrees
+pixpress batch rotate ./photos --angle 90
 ```
 
 #### Advanced Batch Options
@@ -236,7 +290,7 @@ pixpress batch convert ./images --format jpg --output ./converted
 pixpress batch convert ./mixed --format webp --include "*.png,*.tiff"
 
 # Exclude certain patterns
-pixress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
+pixpress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
 
 # Preview what will be processed (dry run)
 pixpress batch convert ./images --format webp --dry-run
