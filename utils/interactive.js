@@ -11,6 +11,7 @@ import { rotateCommand, getRotationPresets } from "./rotate.js";
 import { infoCommand } from "./info.js";
 import { batchCommand } from "./batch.js";
 import { filtersCommand, getAvailableFilters } from "./filters.js";
+import { collageCommand, getAvailableLayouts } from "./collage.js";
 
 // Helper function to validate file existence
 async function validateFilePath(filePath) {
@@ -45,6 +46,38 @@ async function validateWatermarkPath(filePath) {
   } catch {
     return "Watermark file not found. Please enter a valid file path.";
   }
+}
+
+// Helper function to validate collage input (folder or comma-separated files)
+async function validateCollageInput(input) {
+  if (!input) return "Input is required for collage creation.";
+
+  // Check if it's a folder
+  try {
+    await access(input, constants.F_OK);
+    const stats = await stat(input);
+    if (stats.isDirectory()) {
+      return true; // Valid folder
+    }
+    if (stats.isFile()) {
+      return true; // Valid single file (will be part of comma-separated list)
+    }
+  } catch {
+    // Not a valid path, check if it's comma-separated file list
+    if (input.includes(",")) {
+      const files = input.split(",").map((f) => f.trim());
+      for (const file of files) {
+        try {
+          await access(file, constants.F_OK);
+        } catch {
+          return `File not found: ${file}`;
+        }
+      }
+      return true; // All files in the list exist
+    }
+    return "Input folder or files not found. Please enter a valid folder path or comma-separated file list.";
+  }
+  return true;
 }
 
 // Helper function to get preset options
@@ -106,6 +139,171 @@ async function getFilterOptions() {
   ]);
 
   return { filter };
+}
+
+// Helper function to get collage options
+async function getCollageOptions() {
+  const availableLayouts = getAvailableLayouts();
+  const choices = [];
+
+  // Add layout choices
+  Object.entries(availableLayouts).forEach(([key, layout]) => {
+    choices.push({
+      name: `${layout.name} - ${layout.description} (${layout.minImages}-${layout.maxImages} images)`,
+      value: key,
+    });
+  });
+
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      name: "layout",
+      message: "Choose collage layout:",
+      choices: choices,
+      pageSize: 10,
+    },
+    {
+      type: "input",
+      name: "width",
+      message: "Canvas width in pixels (default 1920):",
+      default: "1920",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (
+          (num >= 200 && num <= 8000) ||
+          "Width must be between 200 and 8000 pixels"
+        );
+      },
+    },
+    {
+      type: "input",
+      name: "height",
+      message: "Canvas height in pixels (default 1080):",
+      default: "1080",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (
+          (num >= 200 && num <= 8000) ||
+          "Height must be between 200 and 8000 pixels"
+        );
+      },
+    },
+    {
+      type: "list",
+      name: "format",
+      message: "Output format:",
+      choices: [
+        { name: "JPG", value: "jpg" },
+        { name: "PNG", value: "png" },
+        { name: "WebP", value: "webp" },
+      ],
+      default: "jpg",
+    },
+    {
+      type: "input",
+      name: "quality",
+      message: "Quality (1-100, default 85):",
+      default: "85",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (num >= 1 && num <= 100) || "Quality must be between 1 and 100";
+      },
+    },
+    {
+      type: "input",
+      name: "spacing",
+      message: "Spacing between images in pixels (default 10):",
+      default: "10",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (
+          (num >= 0 && num <= 100) || "Spacing must be between 0 and 100 pixels"
+        );
+      },
+    },
+    {
+      type: "input",
+      name: "background",
+      message: "Background color (hex, rgb, or name, default #FFFFFF):",
+      default: "#FFFFFF",
+    },
+  ]);
+
+  // Layout-specific options
+  if (answers.layout === "grid") {
+    const gridOptions = await inquirer.prompt([
+      {
+        type: "input",
+        name: "cols",
+        message: "Number of columns (leave empty for auto-calculate):",
+        validate: (input) => {
+          if (!input) return true;
+          const num = parseInt(input);
+          return num > 0 || "Columns must be a positive number";
+        },
+      },
+      {
+        type: "list",
+        name: "fit",
+        message: "Image fit mode:",
+        choices: [
+          { name: "cover - Crop to fit exactly", value: "cover" },
+          { name: "contain - Fit inside cell", value: "contain" },
+          { name: "fill - Stretch to fit", value: "fill" },
+        ],
+        default: "cover",
+      },
+    ]);
+    Object.assign(answers, gridOptions);
+  } else if (answers.layout === "strip") {
+    const stripOptions = await inquirer.prompt([
+      {
+        type: "list",
+        name: "direction",
+        message: "Strip direction:",
+        choices: [
+          { name: "Horizontal", value: "horizontal" },
+          { name: "Vertical", value: "vertical" },
+        ],
+        default: "horizontal",
+      },
+      {
+        type: "list",
+        name: "fit",
+        message: "Image fit mode:",
+        choices: [
+          { name: "cover - Crop to fit exactly", value: "cover" },
+          { name: "contain - Fit inside strip", value: "contain" },
+          { name: "fill - Stretch to fit", value: "fill" },
+        ],
+        default: "cover",
+      },
+    ]);
+    Object.assign(answers, stripOptions);
+  }
+
+  // General options for all layouts
+  const generalOptions = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "shuffle",
+      message: "Randomly shuffle images?",
+      default: false,
+    },
+    {
+      type: "input",
+      name: "maxFiles",
+      message: "Maximum number of images to use (leave empty for all):",
+      validate: (input) => {
+        if (!input) return true;
+        const num = parseInt(input);
+        return num > 0 || "Must be a positive number";
+      },
+    },
+  ]);
+
+  Object.assign(answers, generalOptions);
+  return answers;
 }
 
 // Helper function to get rotation options
@@ -409,6 +607,10 @@ export async function startInteractiveMode() {
             value: "single",
           },
           {
+            name: "🖼️  Collage - Create photo collages from multiple images",
+            value: "collage",
+          },
+          {
             name: "📁 Batch Processing - Process all images in a folder",
             value: "batch",
           },
@@ -418,6 +620,8 @@ export async function startInteractiveMode() {
 
     if (processingMode === "single") {
       await processSingleImage();
+    } else if (processingMode === "collage") {
+      await processCollage();
     } else {
       await processBatchImages();
     }
@@ -449,6 +653,74 @@ export async function startInteractiveMode() {
     }
     process.exit(1);
   }
+}
+
+async function processCollage() {
+  console.log(chalk.cyan("🖼️  Setting up collage creation...\n"));
+
+  // Step 1: Get input source
+  const { inputSource } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "inputSource",
+      message: "Where are your images located?",
+      choices: [
+        {
+          name: "📁 Folder - Use all images in a folder",
+          value: "folder",
+        },
+        {
+          name: "📋 File List - Specify individual image files",
+          value: "files",
+        },
+      ],
+    },
+  ]);
+
+  let inputPath;
+
+  if (inputSource === "folder") {
+    const { folderPath } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "folderPath",
+        message: "Enter the path to your image folder:",
+        validate: validateFolderPath,
+      },
+    ]);
+    inputPath = folderPath;
+  } else {
+    const { fileList } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "fileList",
+        message: "Enter comma-separated image file paths:",
+        validate: validateCollageInput,
+      },
+    ]);
+    inputPath = fileList;
+  }
+
+  // Step 2: Get collage options
+  const collageOptions = await getCollageOptions();
+
+  // Step 3: Get output path
+  const { outputFile } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "outputFile",
+      message: "Output file path (leave empty for auto-generated):",
+    },
+  ]);
+
+  if (outputFile) {
+    collageOptions.output = outputFile;
+  }
+
+  console.log(chalk.yellow("\n🚀 Creating your collage...\n"));
+
+  // Execute collage creation
+  await collageCommand(inputPath, collageOptions);
 }
 
 async function processSingleImage() {
