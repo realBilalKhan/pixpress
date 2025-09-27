@@ -12,6 +12,11 @@ import { infoCommand } from "./info.js";
 import { batchCommand } from "./batch.js";
 import { filtersCommand, getAvailableFilters } from "./filters.js";
 import { collageCommand, getAvailableLayouts } from "./collage.js";
+import {
+  memeCommand,
+  getAvailableMemeTemplates,
+  getMemeFilters,
+} from "./meme.js";
 
 // Helper function to validate file existence
 async function validateFilePath(filePath) {
@@ -752,6 +757,10 @@ async function processSingleImage() {
           value: "filters",
         },
         {
+          name: "😂 Meme - Create viral memes with text",
+          value: "meme",
+        },
+        {
           name: "⚡ Preset - Apply quick presets",
           value: "preset",
         },
@@ -763,42 +772,67 @@ async function processSingleImage() {
     },
   ]);
 
-  // Step 2: Get input file
-  const { inputFile } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "inputFile",
-      message: "Enter the path to your input image:",
-      validate: validateFilePath,
-    },
-  ]);
-
-  // Step 3: Operation-specific questions (skip for info command)
+  let inputFile = null;
   let options = {};
 
-  if (operation !== "info") {
-    switch (operation) {
-      case "resize":
-        options = await getResizeOptions();
-        break;
-      case "convert":
-        options = await getConvertOptions();
-        break;
-      case "rotate":
-        options = await getRotateOptions();
-        break;
-      case "filters":
-        options = await getFilterOptions();
-        break;
-      case "preset":
-        options = await getPresetOptions();
-        break;
-      case "watermark":
-        options = await getWatermarkOptions();
-        break;
-    }
+  // Step 2: For meme, check if input is needed first
+  if (operation === "meme") {
+    // Get meme options first to determine if we need an input image
+    options = await getMemeOptions();
 
-    // Step 4: Get output file (optional, not needed for info)
+    // Only ask for input file if needed
+    if (options.needsInputImage !== false) {
+      const { input } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "input",
+          message: "Enter the path to your input image:",
+          validate: validateFilePath,
+        },
+      ]);
+      inputFile = input;
+    } else {
+      console.log(chalk.green("✓ Using built-in template image"));
+    }
+  } else {
+    // Step 2: Get input file for all other operations
+    const { input } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "input",
+        message: "Enter the path to your input image:",
+        validate: validateFilePath,
+      },
+    ]);
+    inputFile = input;
+
+    // Step 3: Operation-specific questions (except meme which we already handled)
+    if (operation !== "info") {
+      switch (operation) {
+        case "resize":
+          options = await getResizeOptions();
+          break;
+        case "convert":
+          options = await getConvertOptions();
+          break;
+        case "rotate":
+          options = await getRotateOptions();
+          break;
+        case "filters":
+          options = await getFilterOptions();
+          break;
+        case "preset":
+          options = await getPresetOptions();
+          break;
+        case "watermark":
+          options = await getWatermarkOptions();
+          break;
+      }
+    }
+  }
+
+  // Step 4: Get output file for operations that need it
+  if (operation !== "info") {
     const { outputFile } = await inquirer.prompt([
       {
         type: "input",
@@ -832,6 +866,9 @@ async function processSingleImage() {
       break;
     case "filters":
       await filtersCommand(inputFile, options);
+      break;
+    case "meme":
+      await memeCommand(inputFile, options);
       break;
     case "preset":
       await presetCommand(inputFile, options);
@@ -871,6 +908,10 @@ async function processBatchImages() {
         {
           name: "🎨 Filters - Apply color filters and effects to all images",
           value: "filters",
+        },
+        {
+          name: "😂 Meme - Add the same text to all images",
+          value: "meme",
         },
         {
           name: "⚡ Preset - Apply the same preset to all images",
@@ -1006,4 +1047,264 @@ async function processBatchImages() {
 
   // Execute batch processing
   await batchCommand(operation, inputFolder, batchOptions);
+}
+
+// Helper function to get meme options
+async function getMemeOptions() {
+  const { memeType } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "memeType",
+      message: "What type of meme do you want to create?",
+      choices: [
+        {
+          name: "🎭 Classic Top/Bottom Text (needs your image)",
+          value: "classic",
+        },
+        {
+          name: "🔥 Popular Template (Drake, SpongeBob, etc.)",
+          value: "template",
+        },
+        {
+          name: "✨ Custom Text Placement (needs your image)",
+          value: "custom",
+        },
+        { name: "💡 Get Suggestions", value: "suggestions" },
+      ],
+    },
+  ]);
+
+  let options = {};
+
+  if (memeType === "suggestions") {
+    console.log(chalk.cyan("\n💡 Meme Creation Tips:"));
+    console.log(chalk.white("1. Keep text short and punchy"));
+    console.log(chalk.white("2. Reference current trends"));
+    console.log(chalk.white("3. Use relatable situations"));
+    console.log(chalk.white("4. High contrast text is more readable"));
+    console.log(
+      chalk.white("5. Test different templates to find what works\n")
+    );
+
+    return getMemeOptions(); // Recursively call to let them choose after tips
+  }
+
+  // Get text style
+  const { style } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "style",
+      message: "Choose text style:",
+      choices: [
+        {
+          name: "Impact - Classic meme font (white with black outline)",
+          value: "impact",
+        },
+        {
+          name: "Modern - Clean with background (Twitter style)",
+          value: "modern",
+        },
+        { name: "Twitter - Black text on white background", value: "twitter" },
+        { name: "Minimal - Simple white text with shadow", value: "minimal" },
+        { name: "Bold - Yellow text with thick black outline", value: "bold" },
+        {
+          name: "Reddit - White text with dark background box",
+          value: "reddit",
+        },
+      ],
+      default: "impact",
+    },
+  ]);
+  options.style = style;
+
+  if (memeType === "template") {
+    const templates = getAvailableMemeTemplates();
+    const templateChoices = Object.entries(templates).map(([key, template]) => {
+      const hasBuiltInImage = template.templateImage && key !== "classic";
+      const imageNote = hasBuiltInImage ? " ✓" : " (needs your image)";
+      const textCount = template.textAreaCount || template.textAreas.length;
+      return {
+        name: `${template.name} - ${template.description} (${textCount} text areas)${imageNote}`,
+        value: key,
+      };
+    });
+
+    const { template } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "template",
+        message: "Choose meme template:",
+        choices: templateChoices,
+        pageSize: 10,
+      },
+    ]);
+    options.template = template;
+
+    // Get appropriate number of text inputs for the template
+    const selectedTemplate = templates[template];
+    const texts = [];
+    const textAreaCount =
+      selectedTemplate.textAreaCount || selectedTemplate.textAreas.length;
+
+    for (let i = 0; i < textAreaCount; i++) {
+      const position = selectedTemplate.positions
+        ? selectedTemplate.positions[i]
+        : `Text ${i + 1}`;
+      const { text } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "text",
+          message: `Enter text for ${position}:`,
+          validate: (input) => input.length > 0 || "Text cannot be empty",
+        },
+      ]);
+      texts.push(text);
+    }
+    options.text = texts;
+
+    // Store whether this template needs an input image
+    options.needsInputImage =
+      !selectedTemplate.templateImage || template === "classic";
+  } else if (memeType === "classic") {
+    const { topText } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "topText",
+        message: "Enter top text (leave empty for none):",
+      },
+    ]);
+
+    const { bottomText } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "bottomText",
+        message: "Enter bottom text (leave empty for none):",
+      },
+    ]);
+
+    const texts = [];
+    if (topText) texts.push(topText);
+    if (bottomText) texts.push(bottomText);
+
+    if (texts.length === 0) {
+      console.error(chalk.red("At least one text field is required!"));
+      return getMemeOptions();
+    }
+
+    options.text = texts;
+    options.needsInputImage = true; // Classic always needs input
+  } else if (memeType === "custom") {
+    const { textCount } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "textCount",
+        message: "How many text areas do you want? (1-4):",
+        validate: (input) => {
+          const num = parseInt(input);
+          return (
+            (num >= 1 && num <= 4) || "Please enter a number between 1 and 4"
+          );
+        },
+      },
+    ]);
+
+    const texts = [];
+    for (let i = 0; i < parseInt(textCount); i++) {
+      const { text } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "text",
+          message: `Enter text #${i + 1}:`,
+          validate: (input) => input.length > 0 || "Text cannot be empty",
+        },
+      ]);
+      texts.push(text);
+    }
+    options.text = texts;
+    options.needsInputImage = true; // Custom always needs input
+  }
+
+  // Ask about filters
+  const { addFilter } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "addFilter",
+      message: "Would you like to add a special effect filter?",
+      default: false,
+    },
+  ]);
+
+  if (addFilter) {
+    const filters = getMemeFilters();
+    const filterChoices = filters.map((filter) => ({
+      name: `${filter.name} - ${filter.description}`,
+      value: filter.name,
+    }));
+    filterChoices.unshift({ name: "None", value: null });
+
+    const { filter } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "filter",
+        message: "Choose filter effect:",
+        choices: filterChoices,
+      },
+    ]);
+
+    if (filter) {
+      options.filter = filter;
+    }
+  }
+
+  // Social media caption
+  const { addCaption } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "addCaption",
+      message: "Would you like to add a social media caption?",
+      default: false,
+    },
+  ]);
+
+  if (addCaption) {
+    const { caption } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "caption",
+        message: "Enter social media caption:",
+      },
+    ]);
+    options.caption = caption;
+  }
+
+  // Quality settings
+  const { quality } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "quality",
+      message: "JPEG quality (1-100, default 85):",
+      default: "85",
+      validate: (input) => {
+        const num = parseInt(input);
+        return (num >= 1 && num <= 100) || "Quality must be between 1 and 100";
+      },
+    },
+  ]);
+  options.quality = quality;
+
+  // Watermark option
+  const { watermark } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "watermark",
+      message: "Add watermark to meme?",
+      default: true,
+    },
+  ]);
+
+  if (!watermark) {
+    options.watermark = false;
+  }
+
+  return options;
 }

@@ -12,6 +12,13 @@ import { infoCommand } from "./utils/info.js";
 import { batchCommand } from "./utils/batch.js";
 import { filtersCommand, listFilters } from "./utils/filters.js";
 import { collageCommand, listLayouts } from "./utils/collage.js";
+import {
+  memeCommand,
+  getAvailableMemeTemplates,
+  getAvailableTextStyles,
+  getMemeFilters,
+  getViralTips,
+} from "./utils/meme.js";
 import { startInteractiveMode } from "./utils/interactive.js";
 
 const program = new Command();
@@ -134,6 +141,180 @@ program
     }
 
     filtersCommand(input, options);
+  });
+
+// Meme command
+program
+  .command("meme [input]")
+  .description("Create viral memes with text overlays and templates")
+  .option("-t, --text <text...>", "Text to add to meme (can specify multiple)")
+  .option(
+    "--template <template>",
+    "Meme template: drake, classic, spongebob, etc."
+  )
+  .option(
+    "-s, --style <style>",
+    "Text style: impact, modern, twitter, minimal",
+    "impact"
+  )
+  .option("-o, --output <output>", "Output file path")
+  .option("-q, --quality <quality>", "JPEG quality (1-100)", "85")
+  .option(
+    "--filter <filter>",
+    "Special effect: deepfry, vintage, cursed, glitch"
+  )
+  .option("--caption <caption>", "Social media caption for the meme")
+  .option("--no-watermark", "Don't add watermark")
+  .option("--list-templates", "List all available meme templates")
+  .option("--list-styles", "List all text styles")
+  .option("--list-filters", "List all meme filters")
+  .option("--tips", "Show viral meme tips")
+  .action((input, options) => {
+    if (options.listTemplates) {
+      const templates = getAvailableMemeTemplates();
+      console.log(chalk.cyan.bold("\n🎭 Available Meme Templates:"));
+      console.log(chalk.gray("─".repeat(50)));
+      Object.entries(templates).forEach(([key, template]) => {
+        console.log(chalk.yellow(`  ${key}:`));
+        console.log(chalk.white(`    ${template.description}`));
+        console.log(
+          chalk.dim(
+            `    Text areas: ${
+              template.textAreaCount || template.textAreas.length
+            }`
+          )
+        );
+        if (template.templateImage && key !== "classic") {
+          console.log(chalk.green(`    ✓ Has built-in template image`));
+        } else {
+          console.log(chalk.dim(`    Requires your own image`));
+        }
+      });
+      console.log(
+        "\n" +
+          chalk.green(
+            'Usage: pixpress meme --template drake --text "Old way" "New way"'
+          )
+      );
+      console.log(
+        chalk.dim(
+          "Note: For templates with built-in images, no input image is required."
+        )
+      );
+      return;
+    }
+
+    if (options.listStyles) {
+      const styles = getAvailableTextStyles();
+      console.log(chalk.cyan.bold("\n✨ Available Text Styles:"));
+      console.log(chalk.gray("─".repeat(50)));
+      Object.entries(styles).forEach(([key, style]) => {
+        console.log(chalk.yellow(`  ${key}:`));
+        console.log(
+          chalk.dim(`    Font: ${style.font}, Size: ${style.fontSize}px`)
+        );
+        if (style.strokeWidth > 0) {
+          console.log(
+            chalk.dim(`    Stroke: ${style.strokeWidth}px ${style.strokeColor}`)
+          );
+        }
+        if (style.backgroundColor) {
+          console.log(chalk.dim(`    Background: ${style.backgroundColor}`));
+        }
+      });
+      return;
+    }
+
+    if (options.listFilters) {
+      const filters = getMemeFilters();
+      console.log(chalk.cyan.bold("\n🎨 Available Meme Filters:"));
+      console.log(chalk.gray("─".repeat(50)));
+      filters.forEach((filter) => {
+        console.log(chalk.yellow(`  ${filter.name}:`));
+        console.log(chalk.white(`    ${filter.description}`));
+      });
+      return;
+    }
+
+    if (options.tips) {
+      const tips = getViralTips();
+      console.log(chalk.cyan.bold("\n🚀 Tips for Creating Viral Memes:"));
+      console.log(chalk.gray("─".repeat(50)));
+      tips.forEach((tip) => {
+        console.log(chalk.white(tip));
+      });
+      console.log(
+        "\n" +
+          chalk.magenta(
+            "Remember: The best memes come from authentic creativity!"
+          )
+      );
+      return;
+    }
+
+    // Check if template is specified and has its own image
+    if (options.template) {
+      const templates = getAvailableMemeTemplates();
+      const template = templates[options.template];
+
+      if (!template) {
+        console.error(
+          chalk.red(`Error: Unknown template '${options.template}'`)
+        );
+        console.log(
+          chalk.dim("Use --list-templates to see available templates")
+        );
+        process.exit(1);
+      }
+
+      // For templates with built-in images (except classic), input is optional
+      if (
+        !input &&
+        (!template.templateImage || options.template === "classic")
+      ) {
+        console.error(
+          chalk.red("Error: Input image path is required for this template")
+        );
+        console.log(
+          chalk.dim(
+            `Usage: pixpress meme <input> --template ${options.template} --text "Your text"`
+          )
+        );
+        process.exit(1);
+      }
+
+      if (!options.text || options.text.length === 0) {
+        console.error(
+          chalk.red(
+            `Error: Text is required. The ${template.name} template needs ${
+              template.textAreaCount || template.textAreas.length
+            } text input(s)`
+          )
+        );
+        console.log(
+          chalk.dim(
+            `Usage: pixpress meme --template ${options.template} --text "Text 1" "Text 2"`
+          )
+        );
+        process.exit(1);
+      }
+    } else if (!input) {
+      // No template specified, so input is required
+      console.error(chalk.red("Error: Input image path is required"));
+      console.log(
+        chalk.dim(
+          'Usage: pixpress meme <input> --text "Top text" "Bottom text"'
+        )
+      );
+      console.log(
+        chalk.dim(
+          'Or use a template: pixpress meme --template drake --text "Old way" "New way"'
+        )
+      );
+      process.exit(1);
+    }
+
+    memeCommand(input, options);
   });
 
 // Collage command
@@ -273,6 +454,10 @@ program
   .option("--cols <cols>", "Grid columns (for collage)")
   .option("--direction <direction>", "Strip direction (for collage)")
   .option("--shuffle", "Shuffle images (for collage)")
+  // Meme options
+  .option("-t, --text <text...>", "Meme text (for meme)")
+  .option("--template <template>", "Meme template (for meme)")
+  .option("--style <style>", "Text style (for meme)", "impact")
   .action(batchCommand);
 
 // Interactive command
@@ -308,17 +493,20 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Flip image horizontally")}
   pixpress rotate photo.jpg --flip-h
 
-  ${chalk.dim("# Rotate and flip in one command")}
-  pixpress rotate photo.jpg --angle 180 --flip-v
-
   ${chalk.dim("# Apply black and white filter")}
   pixpress filters photo.jpg --filter grayscale
 
-  ${chalk.dim("# List available color filters")}
-  pixpress filters --list
+  ${chalk.dim("# Create a classic meme with your image")}
+  pixpress meme photo.jpg --text "When you code" "It finally works"
 
-  ${chalk.dim("# Apply vintage filter during format conversion")}
-  pixpress convert photo.jpg -f jpg --filter vintage
+  ${chalk.dim("# Create Drake meme (no input image needed)")}
+  pixpress meme --template drake --text "Old way" "PixPress way"
+
+  ${chalk.dim("# Deep fry your meme")}
+  pixpress meme photo.jpg --text "BOTTOM TEXT" --filter deepfry
+
+  ${chalk.dim("# Create a 3x3 photo grid")}
+  pixpress collage ./vacation-photos --layout grid --cols 3
 
   ${chalk.dim("# Apply thumbnail preset")}
   pixpress preset photo.jpg -p thumbnail
@@ -326,40 +514,36 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Add watermark")}
   pixpress watermark photo.jpg -w logo.png
 
-  ${chalk.dim("# Create a 3x3 photo grid")}
-  pixpress collage ./vacation-photos --layout grid --cols 3
-
-  ${chalk.dim("# Create polaroid-style scattered layout")}
-  pixpress collage img1.jpg,img2.jpg,img3.jpg --layout polaroid
-
-  ${chalk.dim("# Create horizontal filmstrip from folder")}
-  pixpress collage ./photos --layout filmstrip --shuffle
-
-  ${chalk.dim("# Create magazine-style layout with custom size")}
-  pixpress collage ./portraits --layout magazine --width 1200 --height 800
-
-  ${chalk.dim("# List available collage layouts")}
-  pixpress collage --list-layouts
-
   ${chalk.dim("# Batch rotate all images 90 degrees")}
   pixpress batch rotate ./photos --angle 90
 
-  ${chalk.dim("# Batch apply sepia filter to all images")}
-  pixpress batch filters ./photos --filter sepia
+  ${chalk.dim("# Batch create memes from folder")}
+  pixpress batch meme ./templates --text "YOUR TEXT HERE"
 
   ${chalk.dim("# Interactive mode (guided process)")}
   pixpress interactive
 
 ${chalk.cyan("Available Operations:")}
   ${chalk.dim(
-    "info, resize, convert, rotate, filters, preset, watermark, collage, batch, interactive"
+    "info, resize, convert, rotate, filters, meme, preset, watermark, collage, batch, interactive"
   )}
+
+${chalk.cyan("Popular Meme Templates:")}
+  ${chalk.dim(
+    "classic (needs image), drake, spongebob, woman_cat, expanding, button, change"
+  )}
+  ${chalk.dim(
+    "Note: Most templates have built-in images. Classic template requires your own image."
+  )}
+
+${chalk.cyan("Meme Text Styles:")}
+  ${chalk.dim("impact (classic), modern, twitter, minimal, bold, reddit")}
+
+${chalk.cyan("Meme Filters:")}
+  ${chalk.dim("deepfry, vintage, cursed, radial, glitch")}
 
 ${chalk.cyan("Popular Color Filters:")}
   ${chalk.dim("grayscale, sepia, vintage, cool, warm, dramatic, soft, vivid")}
-
-${chalk.cyan("Common Rotations:")}
-  ${chalk.dim("90° (clockwise), -90° (counter-clockwise), 180° (upside-down)")}
 
 ${chalk.cyan("Collage Layouts:")}
   ${chalk.dim("grid, strip, polaroid, mosaic, filmstrip, magazine")}

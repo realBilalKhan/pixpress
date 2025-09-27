@@ -12,6 +12,7 @@
 - **Convert** - Change image formats (JPG, PNG, WebP, TIFF, GIF, BMP, AVIF)
 - **Rotate** - Rotate and flip images with precise control
 - **Filters** - Apply color filters and artistic effects
+- **Meme** - Create viral memes with text overlays and templates
 - **Collage** - Create photo collages with multiple layout options
 - **Preset** - Quick presets for common use cases
 - **Watermark** - Add watermarks with customizable positioning
@@ -29,6 +30,7 @@ pixpress
 # Or use specific commands directly
 pixpress info photo.jpg
 pixpress resize photo.jpg --width 800
+pixpress meme --template drake --text "Old way" "New way"
 pixpress collage ./vacation-photos --layout grid
 ```
 
@@ -153,6 +155,52 @@ pixpress filters --list
 
 **Available filters:** `grayscale`, `sepia`, `negative`, `cool`, `warm`, `vintage`, `polaroid`, `dramatic`, `soft`, `dark`, `bright`, `vivid`, `muted`, `noir`, `retro`, `cyberpunk`
 
+### Create Viral Memes
+
+Generate memes with text overlays using popular templates or your own images.
+
+```bash
+# Use built-in Drake template (no image needed)
+pixpress meme --template drake --text "Writing documentation" "Using PixPress"
+
+# Create classic top/bottom text meme with your image
+pixpress meme funny.jpg --text "When you finally" "Fix that bug"
+
+# Use Mocking SpongeBob template (auto-alternating caps)
+pixpress meme --template spongebob --text "nObOdY uSeS cLi ToOlS"
+
+# Create Woman Yelling at Cat meme
+pixpress meme --template woman_cat --text "Me explaining my code" "The code"
+
+# Apply deep fry filter for extra spice
+pixpress meme photo.jpg --text "BOTTOM TEXT" --filter deepfry
+
+# Change text style
+pixpress meme photo.jpg --text "Modern meme" --style modern
+
+# Add social media caption
+pixpress meme --template stonks --text "Productivity" --caption "When you automate a 5-minute task after 3 hours of coding #developerlife"
+
+# List all available templates
+pixpress meme --list-templates
+
+# List all text styles
+pixpress meme --list-styles
+
+# Get viral meme tips
+pixpress meme --tips
+```
+
+#### Meme Options:
+
+- `template <name>` - Use a predefined meme template
+- `text <text...>` - Text to add (multiple for different areas)
+- `style <style>` - Text style (default: impact)
+- `filter <filter>` - Special effect filter
+- `caption <text>` - Social media caption
+- `no-watermark` - Remove watermark
+- `quality <1-100>` - Output quality (default: 85)
+
 ### Create Photo Collages
 
 Combine multiple images into beautiful collages with various layout options.
@@ -264,6 +312,9 @@ pixpress batch convert ./images --format webp --quality 80
 # Apply color filter to all images
 pixpress batch filters ./photos --filter vintage
 
+# Create memes from all images in folder
+pixpress batch meme ./templates --text "YOUR TEXT HERE"
+
 # Create collages from subfolders
 pixpress batch collage ./events --layout grid --cols 3
 
@@ -297,6 +348,9 @@ pixpress batch convert ./images --format webp --dry-run
 
 # Show detailed progress for each file
 pixpress batch preset ./gallery --preset social --verbose
+
+# Batch create memes with template
+pixpress batch meme ./photos --template classic --text "WHEN YOU" "BATCH PROCESS"
 ```
 
 #### Batch Processing Options:
