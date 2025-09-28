@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import boxen from "boxen";
 import chalk from "chalk";
+import figlet from "figlet";
+import { rainbow } from "gradient-string";
 import { resizeCommand } from "./utils/resize.js";
 import { convertCommand } from "./utils/convert.js";
 import { presetCommand } from "./utils/preset.js";
@@ -28,18 +29,17 @@ program
   .description("A beginner-friendly CLI tool for image manipulation")
   .version("1.0.0");
 
-const content = `${chalk.bold.magenta("Pixpress")}\nImage Magic Made Easy`;
-
-const banner = boxen(content, {
-  padding: 1,
-  margin: 1,
-  borderStyle: "round",
-  borderColor: "cyan",
-  align: "center",
-  float: "center",
+const title = figlet.textSync("Pixpress", {
+  font: "Small Slant",
+  horizontalLayout: "default",
+  verticalLayout: "default",
 });
 
-console.log(banner);
+const coloredTitle = rainbow(title);
+const subtitle = chalk.italic.cyan("✨ Image Magic Made Easy ✨");
+const divider = chalk.dim("─".repeat(50));
+
+console.log(`\n${coloredTitle}\n${divider}\n${subtitle}\n${divider}`);
 
 // Info command
 program
@@ -552,9 +552,6 @@ ${chalk.cyan("Collage Layouts:")}
 
 // Check if no arguments provided or only the script name
 if (process.argv.length === 2) {
-  console.log(
-    chalk.blue("💡 No command specified. Starting interactive mode...\n")
-  );
   startInteractiveMode();
 } else {
   // Parse command line arguments normally

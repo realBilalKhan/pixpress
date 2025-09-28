@@ -433,7 +433,7 @@ async function getRotateOptions() {
     },
   ]);
 
-  options.quality = quality;
+  options.quality = parseInt(quality);
 
   return options;
 }
@@ -488,10 +488,10 @@ async function getResizeOptions() {
 
   // Filter out empty values
   const options = {};
-  if (answers.width) options.width = answers.width;
-  if (answers.height) options.height = answers.height;
+  if (answers.width) options.width = parseInt(answers.width);
+  if (answers.height) options.height = parseInt(answers.height);
   options.fit = answers.fit;
-  options.quality = answers.quality;
+  options.quality = parseInt(answers.quality);
 
   return options;
 }
@@ -536,6 +536,8 @@ async function getConvertOptions() {
       default: false,
     },
   ]);
+
+  answers.quality = parseInt(answers.quality);
 
   // If user wants to apply a filter, get filter options
   if (answers.applyFilter) {
@@ -592,12 +594,14 @@ async function getWatermarkOptions() {
     },
   ]);
 
+  answers.size = parseInt(answers.size);
+  answers.opacity = parseFloat(answers.opacity);
+
   return answers;
 }
 
 export async function startInteractiveMode() {
-  console.log(chalk.cyan.bold("\n🎨 Welcome to Pixpress Interactive Mode!"));
-  console.log(chalk.gray("Let's process your image(s) step by step.\n"));
+  console.log();
 
   try {
     // Step 1: Choose processing mode
@@ -605,23 +609,32 @@ export async function startInteractiveMode() {
       {
         type: "list",
         name: "processingMode",
-        message: "How would you like to process images?",
+        message: "How would you like to process images?\n",
         choices: [
           {
             name: "🖼️  Single Image - Process one image file",
             value: "single",
           },
           {
-            name: "🖼️  Collage - Create photo collages from multiple images",
+            name: "🎨  Collage - Create photo collages from multiple images",
             value: "collage",
           },
           {
             name: "📁 Batch Processing - Process all images in a folder",
             value: "batch",
           },
+          {
+            name: "❌ Exit",
+            value: "exit",
+          },
         ],
       },
     ]);
+
+    if (processingMode === "exit") {
+      console.log(chalk.green.bold("\n✨ Thanks for using Pixpress!\n"));
+      return;
+    }
 
     if (processingMode === "single") {
       await processSingleImage();
@@ -644,9 +657,7 @@ export async function startInteractiveMode() {
     if (continueProcessing) {
       await startInteractiveMode();
     } else {
-      console.log(
-        chalk.green.bold("\n✨ Thanks for using Pixpress! Goodbye!\n")
-      );
+      console.log(chalk.green.bold("\n✨ Thanks for using Pixpress!\n"));
     }
   } catch (error) {
     if (error.isTtyError) {
@@ -661,7 +672,7 @@ export async function startInteractiveMode() {
 }
 
 async function processCollage() {
-  console.log(chalk.cyan("🖼️  Setting up collage creation...\n"));
+  console.log(chalk.cyan("🎨 Setting up collage creation...\n"));
 
   // Step 1: Get input source
   const { inputSource } = await inquirer.prompt([
@@ -977,6 +988,9 @@ async function processBatchImages() {
       break;
     case "watermark":
       operationOptions = await getWatermarkOptions();
+      break;
+    case "meme":
+      operationOptions = await getMemeOptions();
       break;
     case "info":
       // Info doesn't need additional options
