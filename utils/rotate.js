@@ -3,9 +3,17 @@ import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 export async function rotateCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Rotating/flipping image...").start();
 
   try {
@@ -33,7 +41,13 @@ export async function rotateCommand(input, options) {
     if (flipHorizontal) suffix += "_flipH";
     if (flipVertical) suffix += "_flipV";
 
-    const outputPath = options.output || generateOutputPath(input, suffix);
+    const outputPath = await generateOutputPath(
+      input,
+      "rotated",
+      suffix,
+      null,
+      options.output
+    );
 
     const metadata = await sharp(input).metadata();
 
@@ -106,9 +120,10 @@ export async function rotateCommand(input, options) {
         chalk.dim(
           `\n  Output: ${finalMetadata.width}x${finalMetadata.height}`
         ) +
-        chalk.dim(`\n  Size: ${inputSize} bytes → ${outputSize} bytes`) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        chalk.dim(`\n  Size: ${inputSize} bytes → ${outputSize} bytes`)
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }

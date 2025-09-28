@@ -3,9 +3,17 @@ import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 export async function watermarkCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Adding watermark...").start();
 
   try {
@@ -42,8 +50,13 @@ export async function watermarkCommand(input, options) {
       throw new Error("Opacity must be between 0.1-1.0");
     }
 
-    const outputPath =
-      options.output || generateOutputPath(input, "_watermarked");
+    const outputPath = await generateOutputPath(
+      input,
+      "watermarked",
+      "_watermarked",
+      null,
+      options.output
+    );
 
     const baseMetadata = await sharp(input).metadata();
     const watermarkMetadata = await sharp(options.watermark).metadata();
@@ -72,7 +85,7 @@ export async function watermarkCommand(input, options) {
             input: Buffer.from([255, 255, 255, Math.round(255 * opacity)]),
             raw: { width: 1, height: 1, channels: 4 },
             tile: true,
-            blend: "dest-in", // Multiply alpha channel
+            blend: "dest-in",
           },
         ])
         .png()
@@ -128,9 +141,10 @@ export async function watermarkCommand(input, options) {
           `\n  Watermark size: ${watermarkWidth}x${watermarkHeight} (${size}%)`
         ) +
         chalk.dim(`\n  Opacity: ${Math.round(opacity * 100)}%`) +
-        chalk.dim(`\n  File size: ${inputSize} bytes → ${outputSize} bytes`) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        chalk.dim(`\n  File size: ${inputSize} bytes → ${outputSize} bytes`)
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }

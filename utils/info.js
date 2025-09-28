@@ -3,9 +3,16 @@ import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
-import { validateInput, handleError, formatFileSize } from "./helpers.js";
+import {
+  validateInput,
+  handleError,
+  formatFileSize,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 export async function infoCommand(input, options = {}) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Reading image information...").start();
 
   try {

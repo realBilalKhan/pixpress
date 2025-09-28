@@ -4,7 +4,14 @@ import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
 import path from "path";
-import { handleError, formatFileSize, getSupportedFormats } from "./helpers.js";
+import {
+  handleError,
+  formatFileSize,
+  getSupportedFormats,
+  generateOutputPath,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 // Predefined collage layouts
 const layouts = {
@@ -53,6 +60,8 @@ const layouts = {
 };
 
 export async function collageCommand(inputPattern, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Creating collage...").start();
 
   try {
@@ -95,11 +104,14 @@ export async function collageCommand(inputPattern, options) {
     }
 
     // Generate output path
-    const outputPath =
-      options.output ||
-      generateCollageOutputPath(inputPattern, layout.name, options.format);
+    const outputPath = await generateOutputPath(
+      inputPattern,
+      "collages",
+      `_${layout.name}_collage`,
+      `.${options.format || "jpg"}`,
+      options.output
+    );
 
-    // Create the collage based on selected layout
     let collageSharp;
 
     switch (layout.name) {
@@ -194,9 +206,10 @@ export async function collageCommand(inputPattern, options) {
           `\n  Canvas: ${outputMeta.width}x${outputMeta.height} pixels`
         ) +
         chalk.dim(`\n  Format: ${outputFormat.toUpperCase()}`) +
-        chalk.dim(`\n  Size: ${formatFileSize(outputSize)}`) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        chalk.dim(`\n  Size: ${formatFileSize(outputSize)}`)
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }

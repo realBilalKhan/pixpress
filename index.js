@@ -28,7 +28,7 @@ program
   .description("A beginner-friendly CLI tool for image manipulation")
   .version("1.0.0");
 
-const content = `${chalk.bold.magenta("PixPress")}\nImage Magic Made Easy`;
+const content = `${chalk.bold.magenta("Pixpress")}\nImage Magic Made Easy`;
 
 const banner = boxen(content, {
   padding: 1,
@@ -500,7 +500,7 @@ ${chalk.yellow("Examples:")}
   pixpress meme photo.jpg --text "When you code" "It finally works"
 
   ${chalk.dim("# Create Drake meme (no input image needed)")}
-  pixpress meme --template drake --text "Old way" "PixPress way"
+  pixpress meme --template drake --text "Old way" "Pixpress way"
 
   ${chalk.dim("# Deep fry your meme")}
   pixpress meme photo.jpg --text "BOTTOM TEXT" --filter deepfry

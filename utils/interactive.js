@@ -596,7 +596,7 @@ async function getWatermarkOptions() {
 }
 
 export async function startInteractiveMode() {
-  console.log(chalk.cyan.bold("\n🎨 Welcome to PixPress Interactive Mode!"));
+  console.log(chalk.cyan.bold("\n🎨 Welcome to Pixpress Interactive Mode!"));
   console.log(chalk.gray("Let's process your image(s) step by step.\n"));
 
   try {
@@ -645,7 +645,7 @@ export async function startInteractiveMode() {
       await startInteractiveMode();
     } else {
       console.log(
-        chalk.green.bold("\n✨ Thanks for using PixPress! Goodbye!\n")
+        chalk.green.bold("\n✨ Thanks for using Pixpress! Goodbye!\n")
       );
     }
   } catch (error) {

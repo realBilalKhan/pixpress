@@ -3,7 +3,13 @@ import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 // Predefined image configurations for common use cases
 const presets = {
@@ -43,6 +49,8 @@ const presets = {
 };
 
 export async function presetCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Applying preset...").start();
 
   try {
@@ -58,8 +66,13 @@ export async function presetCommand(input, options) {
       );
     }
 
-    const outputPath =
-      options.output || generateOutputPath(input, `_${presetName}`);
+    const outputPath = await generateOutputPath(
+      input,
+      "presets",
+      `_${presetName}`,
+      null,
+      options.output
+    );
 
     const metadata = await sharp(input).metadata();
     spinner.text = `Applying ${presetName} preset (${preset.description})`;
@@ -72,7 +85,7 @@ export async function presetCommand(input, options) {
         width: preset.width,
         height: preset.height,
         fit: preset.fit || "cover",
-        withoutEnlargement: false, // Allow upscaling for consistent sizing
+        withoutEnlargement: false,
       });
     }
 
@@ -110,7 +123,7 @@ export async function presetCommand(input, options) {
         pipeline = pipeline.jpeg({
           quality: preset.quality,
           progressive: preset.progressive,
-          mozjpeg: true, // Use mozjpeg encoder for better compression
+          mozjpeg: true,
         });
       }
     }
@@ -133,9 +146,10 @@ export async function presetCommand(input, options) {
           `\n  Size: ${inputSize} bytes → ${outputSize} bytes (${
             savings > 0 ? "-" + savings : "+" + Math.abs(savings)
           }%)`
-        ) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        )
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }

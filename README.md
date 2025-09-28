@@ -369,6 +369,26 @@ All commands support these options:
 - `-o, --output <path>` - Custom output file path
 - `-q, --quality <1-100>` - JPEG/WebP quality (default: 80)
 
+## Output Directory
+
+Pixpress saves all processed images to a dedicated folder on your system:
+
+- **Windows**: `Documents/Pixpress/`
+- **macOS**: `Pictures/Pixpress/`
+- **Linux**: `Pictures/Pixpress/`
+
+Images are automatically organized by operation type:
+
+- `resized/` - Resized images
+- `converted/` - Format conversions
+- `filtered/` - Images with filters applied
+- `memes/` - Created memes
+- `collages/` - Photo collages
+- And more...
+
+Each file is saved with a unique timestamp to prevent overwrites:
+`yourimage_operation_20250128_143025_a3f.jpg`
+
 ## Requirements
 
 - Node.js >= 14.0.0

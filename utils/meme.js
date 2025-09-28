@@ -5,7 +5,13 @@ import ora from "ora";
 import path from "path";
 import { fileURLToPath } from "url";
 import { access, constants } from "fs/promises";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -374,6 +380,8 @@ const textStyles = {
 };
 
 export async function memeCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Creating your meme...").start();
 
   try {
@@ -383,8 +391,13 @@ export async function memeCommand(input, options) {
         : [options.text]
       : [];
 
-    const outputPath =
-      options.output || generateOutputPath(input || "meme", "_meme", ".jpg");
+    const outputPath = await generateOutputPath(
+      input || "meme",
+      "memes",
+      "_meme",
+      ".jpg",
+      options.output
+    );
 
     let image;
     let metadata;
@@ -404,7 +417,7 @@ export async function memeCommand(input, options) {
           // If template image not found, fall back to requiring input
           if (!input) {
             throw new Error(
-              `Template image not found at ${template.templateImage}. Please ensure template assets exist in the assets/templates folder.`
+              `Template image not found. Please ensure template assets exist.`
             );
           }
           spinner.text = "Template image not found, using your image...";
@@ -472,9 +485,10 @@ export async function memeCommand(input, options) {
     spinner.succeed(
       chalk.green("✓ Meme created successfully!") +
         chalk.dim(`\n  Template: ${options.template || "classic"}`) +
-        chalk.dim(`\n  Style: ${options.style || "impact"}`) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        chalk.dim(`\n  Style: ${options.style || "impact"}`)
     );
+
+    displayOutputLocation(outputPath);
 
     if (options.caption) {
       console.log(chalk.cyan(`\n💬 Ready to post with caption:`));
@@ -896,7 +910,7 @@ function escapeXml(text) {
 }
 
 async function addMemeWatermark(image, metadata) {
-  const watermarkText = "@PixPressMemes";
+  const watermarkText = "@PixpressMemes";
   const { width, height } = metadata;
 
   const watermarkSvg = `

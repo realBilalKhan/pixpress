@@ -3,9 +3,17 @@ import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 export async function filtersCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Applying color filter...").start();
 
   try {
@@ -20,8 +28,13 @@ export async function filtersCommand(input, options) {
       );
     }
 
-    const outputPath =
-      options.output || generateOutputPath(input, `_${filterName}`);
+    const outputPath = await generateOutputPath(
+      input,
+      "filtered",
+      `_${filterName}`,
+      null,
+      options.output
+    );
 
     const metadata = await sharp(input).metadata();
     spinner.text = `Applying ${filterName} filter to ${metadata.width}x${metadata.height} image`;
@@ -68,9 +81,10 @@ export async function filtersCommand(input, options) {
             metadata.height
           } ${inputFormat?.toUpperCase()}`
         ) +
-        chalk.dim(`\n  Size: ${inputSize} bytes → ${outputSize} bytes`) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        chalk.dim(`\n  Size: ${inputSize} bytes → ${outputSize} bytes`)
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }

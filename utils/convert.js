@@ -2,17 +2,24 @@
 import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
-import { validateInput, generateOutputPath, handleError } from "./helpers.js";
 import fs from "fs-extra";
+import {
+  validateInput,
+  generateOutputPath,
+  handleError,
+  displayOutputLocation,
+  initializePixpressDirectory,
+} from "./helpers.js";
 
 export async function convertCommand(input, options) {
+  await initializePixpressDirectory();
+
   const spinner = ora("Converting image...").start();
 
   try {
     await validateInput(input);
 
     const format = options.format.toLowerCase();
-    // List of image formats we can convert to
     const supportedFormats = [
       "jpg",
       "jpeg",
@@ -32,10 +39,14 @@ export async function convertCommand(input, options) {
       );
     }
 
-    const outputPath =
-      options.output || generateOutputPath(input, "", `.${format}`);
+    const outputPath = await generateOutputPath(
+      input,
+      "converted",
+      "",
+      `.${format}`,
+      options.output
+    );
 
-    // Get original image info to show progress
     const metadata = await sharp(input).metadata();
     spinner.text = `Converting ${metadata.format} → ${format.toUpperCase()}`;
 
@@ -55,19 +66,19 @@ export async function convertCommand(input, options) {
       case "jpeg":
         pipeline = pipeline.jpeg({
           quality: parseInt(options.quality),
-          progressive: true, // Loads gradually for better UX
+          progressive: true,
         });
         break;
       case "png":
         pipeline = pipeline.png({
           progressive: true,
-          compressionLevel: 6, // Balanced compression
+          compressionLevel: 6,
         });
         break;
       case "webp":
         pipeline = pipeline.webp({
           quality: parseInt(options.quality),
-          effort: 4, // Moderate compression effort
+          effort: 4,
         });
         break;
       case "tiff":
@@ -90,7 +101,6 @@ export async function convertCommand(input, options) {
 
     await pipeline.toFile(outputPath);
 
-    // Calculate file size difference to show savings
     const inputSize = (await fs.stat(input)).size;
     const outputSize = (await fs.stat(outputPath)).size;
     const savings = (((inputSize - outputSize) / inputSize) * 100).toFixed(1);
@@ -106,9 +116,10 @@ export async function convertCommand(input, options) {
           `\n  Size: ${inputSize} bytes → ${outputSize} bytes (${
             savings > 0 ? "-" + savings : "+" + Math.abs(savings)
           }%)`
-        ) +
-        chalk.dim(`\n  Saved to: ${outputPath}`)
+        )
     );
+
+    displayOutputLocation(outputPath);
   } catch (error) {
     handleError(spinner, error);
   }
