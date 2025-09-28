@@ -17,7 +17,8 @@ export async function convertCommand(input, options) {
   const spinner = ora("Converting image...").start();
 
   try {
-    await validateInput(input);
+    const processedInputPath = await validateInput(input);
+    const wasConverted = processedInputPath !== input;
 
     const format = options.format.toLowerCase();
     const supportedFormats = [
@@ -47,10 +48,23 @@ export async function convertCommand(input, options) {
       options.output
     );
 
-    const metadata = await sharp(input).metadata();
-    spinner.text = `Converting ${metadata.format} → ${format.toUpperCase()}`;
+    const metadata = await sharp(processedInputPath).metadata();
 
-    let pipeline = sharp(input);
+    // Special handling for HEIC/HEIF files
+    const isHeicInput =
+      metadata.format === "heif" || metadata.format === "heic" || wasConverted;
+    if (isHeicInput) {
+      spinner.text = `Converting HEIC/HEIF → ${format.toUpperCase()}`;
+      console.log(
+        chalk.cyan("📱 Processing HEIC/HEIF file from iOS/macOS device")
+      );
+    } else {
+      spinner.text = `Converting ${
+        metadata.format?.toUpperCase() || "Unknown"
+      } → ${format.toUpperCase()}`;
+    }
+
+    let pipeline = sharp(processedInputPath);
 
     // Apply color filters/effects if specified
     if (options.filter) {
@@ -101,16 +115,19 @@ export async function convertCommand(input, options) {
 
     await pipeline.toFile(outputPath);
 
-    const inputSize = (await fs.stat(input)).size;
+    const inputSize = (await fs.stat(processedInputPath)).size;
     const outputSize = (await fs.stat(outputPath)).size;
     const savings = (((inputSize - outputSize) / inputSize) * 100).toFixed(1);
 
     const filterText = options.filter ? ` with ${options.filter} filter` : "";
+    const inputFormatText = isHeicInput
+      ? "HEIC/HEIF"
+      : metadata.format?.toUpperCase() || "Unknown";
 
     spinner.succeed(
       chalk.green("✓ Image converted successfully!") +
         chalk.dim(
-          `\n  Format: ${metadata.format.toUpperCase()} → ${format.toUpperCase()}${filterText}`
+          `\n  Format: ${inputFormatText} → ${format.toUpperCase()}${filterText}`
         ) +
         chalk.dim(
           `\n  Size: ${inputSize} bytes → ${outputSize} bytes (${

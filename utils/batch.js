@@ -55,7 +55,7 @@ export async function batchCommand(operation, folder, options = {}) {
       await fs.ensureDir(outputDir);
     }
 
-    // Find all image files
+    // Find all image files (including HEIC/HEIF)
     const imageFiles = await findImageFiles(folder, options);
 
     if (imageFiles.length === 0) {
@@ -65,7 +65,23 @@ export async function batchCommand(operation, folder, options = {}) {
       return;
     }
 
-    spinner.text = `Found ${imageFiles.length} image(s) to process`;
+    // Check for HEIC files and show info
+    const heicCount = imageFiles.filter(
+      (file) =>
+        file.name.toLowerCase().endsWith(".heic") ||
+        file.name.toLowerCase().endsWith(".heif")
+    ).length;
+
+    if (heicCount > 0) {
+      spinner.text = `Found ${imageFiles.length} image(s) including ${heicCount} HEIC/HEIF file(s)`;
+      console.log(
+        chalk.cyan(
+          `📱 Found ${heicCount} HEIC/HEIF file(s) from iOS/macOS devices`
+        )
+      );
+    } else {
+      spinner.text = `Found ${imageFiles.length} image(s) to process`;
+    }
 
     // Show dry run results
     if (options.dryRun) {
@@ -85,7 +101,7 @@ export async function batchCommand(operation, folder, options = {}) {
     );
 
     // Show final results
-    displayBatchResults(spinner, results, operation);
+    displayBatchResults(spinner, results, operation, heicCount);
   } catch (error) {
     spinner.fail(chalk.red("✗ Batch processing failed"));
     console.error(chalk.red(`Error: ${error.message}`));
@@ -221,7 +237,7 @@ async function findImageFiles(folder, options) {
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
 
-        // Check if file matches supported image extensions
+        // Check if file matches supported image extensions (including HEIC/HEIF)
         if (supportedExtensions.includes(ext)) {
           const relativePath = path.relative(folder, fullPath);
 
@@ -245,6 +261,7 @@ async function findImageFiles(folder, options) {
               name: entry.name,
               relativePath: relativePath,
               dir: path.dirname(fullPath),
+              isHeic: ext === ".heic" || ext === ".heif",
             });
           }
         }
@@ -264,6 +281,11 @@ function displayDryRunResults(imageFiles, operation, options, outputDir) {
   console.log(chalk.dim(`Input folder: ${path.resolve(process.cwd())}`));
   console.log(chalk.dim(`Output folder: ${outputDir}`));
   console.log(chalk.dim(`Files to process: ${imageFiles.length}`));
+
+  const heicCount = imageFiles.filter((file) => file.isHeic).length;
+  if (heicCount > 0) {
+    console.log(chalk.cyan(`HEIC/HEIF files: ${heicCount}`));
+  }
 
   if (options.recursive) {
     console.log(chalk.dim(`Mode: Recursive`));
@@ -327,7 +349,10 @@ function displayDryRunResults(imageFiles, operation, options, outputDir) {
   // Show first 10 files and summary if more
   const displayFiles = imageFiles.slice(0, 10);
   displayFiles.forEach((file, index) => {
-    console.log(chalk.dim(`  ${index + 1}. ${file.relativePath}`));
+    const heicIndicator = file.isHeic ? chalk.cyan(" [HEIC/HEIF]") : "";
+    console.log(
+      chalk.dim(`  ${index + 1}. ${file.relativePath}${heicIndicator}`)
+    );
   });
 
   if (imageFiles.length > 10) {
@@ -346,6 +371,7 @@ async function processBatch(imageFiles, operation, options, outputDir) {
     errors: [],
     totalInputSize: 0,
     totalOutputSize: 0,
+    heicProcessed: 0,
   };
 
   let processed = 0;
@@ -359,6 +385,11 @@ async function processBatch(imageFiles, operation, options, outputDir) {
       // Calculate input file size
       const inputStats = await fs.stat(file.path);
       results.totalInputSize += inputStats.size;
+
+      // Track HEIC files
+      if (file.isHeic) {
+        results.heicProcessed++;
+      }
 
       // Prepare output path maintaining folder structure
       const relativeDir = path.relative(process.cwd(), file.dir);
@@ -399,11 +430,24 @@ async function processBatch(imageFiles, operation, options, outputDir) {
             break;
         }
 
+        // For HEIC files, default to JPG output unless specifically converting
+        if (file.isHeic && operation !== "convert") {
+          const outputExt = path.extname(outputFileName);
+          if (outputExt === ".heic" || outputExt === ".heif") {
+            outputFileName = outputFileName.replace(/\.(heic|heif)$/i, ".jpg");
+          }
+        }
+
         fileOptions.output = path.join(outputFileDir, outputFileName);
       }
 
       if (options.verbose) {
-        console.log(chalk.cyan(`${progress} Processing: ${file.relativePath}`));
+        const heicIndicator = file.isHeic ? " [HEIC]" : "";
+        console.log(
+          chalk.cyan(
+            `${progress} Processing: ${file.relativePath}${heicIndicator}`
+          )
+        );
       }
 
       await executeOperation(operation, file.path, fileOptions);
@@ -420,6 +464,7 @@ async function processBatch(imageFiles, operation, options, outputDir) {
       results.errors.push({
         file: file.relativePath,
         error: error.message,
+        isHeic: file.isHeic,
       });
 
       if (options.verbose) {
@@ -474,7 +519,7 @@ async function executeOperation(operation, inputPath, options) {
   }
 }
 
-function displayBatchResults(spinner, results, operation) {
+function displayBatchResults(spinner, results, operation, heicCount = 0) {
   if (results.failed === 0) {
     spinner.succeed(
       chalk.green(`✓ Batch ${operation} completed successfully!`)
@@ -491,6 +536,13 @@ function displayBatchResults(spinner, results, operation) {
 
   if (results.failed > 0) {
     console.log(chalk.red(`  ✗ Failed: ${results.failed}`));
+  }
+
+  // Show HEIC processing stats if any were processed
+  if (results.heicProcessed > 0) {
+    console.log(
+      chalk.cyan(`  📱 HEIC/HEIF files processed: ${results.heicProcessed}`)
+    );
   }
 
   // Show size comparison for operations that modify files
@@ -528,12 +580,30 @@ function displayBatchResults(spinner, results, operation) {
   if (results.errors.length > 0) {
     console.log(chalk.red.bold(`\n❌ Errors encountered:`));
     results.errors.slice(0, 5).forEach((error, index) => {
-      console.log(chalk.red(`  ${index + 1}. ${error.file}: ${error.error}`));
+      const heicIndicator = error.isHeic ? " [HEIC]" : "";
+      console.log(
+        chalk.red(
+          `  ${index + 1}. ${error.file}${heicIndicator}: ${error.error}`
+        )
+      );
     });
 
     if (results.errors.length > 5) {
       console.log(
         chalk.red(`  ... and ${results.errors.length - 5} more errors`)
+      );
+    }
+
+    // Check for HEIC-related errors
+    const heicErrors = results.errors.filter((error) => error.isHeic);
+    if (heicErrors.length > 0) {
+      console.log(
+        chalk.yellow(
+          `\n💡 Note: ${heicErrors.length} HEIC/HEIF file(s) failed processing.`
+        )
+      );
+      console.log(
+        chalk.yellow("   Try updating Sharp: npm install sharp@latest")
       );
     }
   }

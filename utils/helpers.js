@@ -6,6 +6,33 @@ import chalk from "chalk";
 import os from "os";
 import crypto from "crypto";
 
+// Convert HEIC to JPEG using heic-convert library as fallback
+async function convertHeicToJpeg(inputPath, outputPath = null) {
+  try {
+    // Try using heic-convert library
+    const convert = (await import("heic-convert")).default;
+
+    const inputBuffer = await pkg.readFile(inputPath);
+    const jpegBuffer = await convert({
+      buffer: inputBuffer,
+      format: "JPEG",
+      quality: 0.9,
+    });
+
+    if (!outputPath) {
+      const parsedPath = parse(inputPath);
+      outputPath = join(parsedPath.dir, `${parsedPath.name}_converted.jpg`);
+    }
+
+    await pkg.writeFile(outputPath, jpegBuffer);
+    return outputPath;
+  } catch (error) {
+    throw new Error(
+      `HEIC conversion failed: ${error.message}. Try: npm install heic-convert`
+    );
+  }
+}
+
 // Get the Pixpress output directory for the current platform
 export function getPixpressDirectory() {
   const platform = os.platform();
@@ -124,6 +151,8 @@ export async function validateInput(filePath) {
       ".gif",
       ".bmp",
       ".avif",
+      ".heic",
+      ".heif",
     ];
 
     // Warn if the file extension is not a common image type
@@ -132,6 +161,53 @@ export async function validateInput(filePath) {
         chalk.yellow(`⚠ Warning: ${filePath} may not be an image file`)
       );
     }
+
+    // Handle HEIC files with fallback conversion
+    const isHeic = ext === ".heic" || ext === ".heif";
+    if (isHeic) {
+      console.log(
+        chalk.cyan(
+          `📱 HEIC/HEIF file detected - processing with native support`
+        )
+      );
+
+      // Test if Sharp can actually process this HEIC file
+      try {
+        const sharp = (await import("sharp")).default;
+        // Try to read metadata first
+        await sharp(filePath).metadata();
+        // Try to convert a small portion to test decoding
+        await sharp(filePath).resize(1, 1).jpeg().toBuffer();
+        console.log(
+          chalk.green(`✓ HEIC file is compatible with Sharp's HEIF decoder`)
+        );
+        return filePath; // Sharp can handle it
+      } catch (sharpError) {
+        console.log(
+          chalk.yellow(
+            `⚠ Sharp's HEIF decoder failed (${
+              sharpError.message.split("\n")[0]
+            }). Falling back to heic-convert...`
+          )
+        );
+
+        try {
+          const convertedPath = await convertHeicToJpeg(filePath);
+          console.log(chalk.green(`✓ HEIC converted to: ${convertedPath}`));
+          return convertedPath; // Return the converted file path
+        } catch (conversionError) {
+          throw new Error(
+            `HEIC file cannot be processed:\n${conversionError.message}\n\n` +
+              `Solutions:\n` +
+              `1. Install: npm install heic-convert\n` +
+              `2. Or manually convert HEIC to JPG first\n` +
+              `3. Or install libheif system dependency with HEVC codec support`
+          );
+        }
+      }
+    }
+
+    return filePath; // Return original path if no conversion needed
   } catch (error) {
     if (error.code === "ENOENT") {
       throw new Error(`File not found: ${filePath}`);
@@ -149,7 +225,7 @@ export function handleError(spinner, error) {
   if (error.message.includes("Input file contains unsupported image format")) {
     console.error(
       chalk.red(
-        "Error: Unsupported image format. Please use JPG, PNG, WebP, TIFF, GIF, or BMP."
+        "Error: Unsupported image format. Please use JPG, PNG, WebP, TIFF, GIF, BMP, AVIF, HEIC, or HEIF."
       )
     );
   } else if (error.message.includes("ENOENT")) {
@@ -160,6 +236,14 @@ export function handleError(spinner, error) {
     console.error(
       chalk.red("Error: Permission denied. Please check file permissions.")
     );
+  } else if (error.message.includes("HEIC conversion failed")) {
+    console.error(chalk.red("Error: HEIC file processing failed."));
+    console.error(chalk.yellow("💡 Solutions:"));
+    console.error(chalk.dim("   1. Install: npm install heic-convert"));
+    console.error(
+      chalk.dim("   2. Install system dependency: brew install libheif (macOS)")
+    );
+    console.error(chalk.dim("   3. Or convert HEIC to JPG manually first"));
   } else {
     console.error(chalk.red(`Error: ${error.message}`));
   }
@@ -187,7 +271,19 @@ export function formatFileSize(bytes) {
 // Centralized list of supported formats for consistency
 export function getSupportedFormats() {
   return {
-    input: ["jpg", "jpeg", "png", "webp", "tiff", "tif", "gif", "bmp", "avif"],
+    input: [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp",
+      "tiff",
+      "tif",
+      "gif",
+      "bmp",
+      "avif",
+      "heic",
+      "heif",
+    ],
     output: ["jpg", "jpeg", "png", "webp", "tiff", "gif", "bmp", "avif"],
   };
 }

@@ -69,7 +69,7 @@ program
   .description("Convert image format")
   .requiredOption(
     "-f, --format <format>",
-    "Output format: jpg, png, webp, tiff, gif, bmp"
+    "Output format: jpg, png, webp, tiff, gif, bmp, avif"
   )
   .option("-o, --output <output>", "Output file path")
   .option("-q, --quality <quality>", "Quality (1-100 for JPEG/WebP)", "80")
@@ -410,8 +410,8 @@ program
   .option("-r, --recursive", "Process subfolders recursively")
   .option(
     "--include <pattern>",
-    "File pattern to include (e.g., *.jpg,*.png)",
-    "*.jpg,*.jpeg,*.png,*.webp,*.tiff,*.gif,*.bmp"
+    "File pattern to include (e.g., *.jpg,*.png,*.heic)",
+    "*.jpg,*.jpeg,*.png,*.webp,*.tiff,*.gif,*.bmp,*.heic,*.heif"
   )
   .option("--exclude <pattern>", "File pattern to exclude")
   .option("--dry-run", "Show what would be processed without doing it")
@@ -481,6 +481,9 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# View image information")}
   pixpress info photo.jpg
 
+  ${chalk.dim("# Convert HEIC to JPG")}
+  pixpress convert IMG_1234.heic -f jpg
+
   ${chalk.dim("# Resize image to 800x600")}
   pixpress resize photo.jpg -w 800 -h 600
 
@@ -514,6 +517,9 @@ ${chalk.yellow("Examples:")}
   ${chalk.dim("# Add watermark")}
   pixpress watermark photo.jpg -w logo.png
 
+  ${chalk.dim("# Batch convert all HEIC files to JPG")}
+  pixpress batch convert ./photos --format jpg --include "*.heic,*.heif"
+
   ${chalk.dim("# Batch rotate all images 90 degrees")}
   pixpress batch rotate ./photos --angle 90
 
@@ -527,6 +533,9 @@ ${chalk.cyan("Available Operations:")}
   ${chalk.dim(
     "info, resize, convert, rotate, filters, meme, preset, watermark, collage, batch, interactive"
   )}
+
+${chalk.cyan("Supported Input Formats:")}
+  ${chalk.dim("JPG, PNG, WebP, TIFF, GIF, BMP, AVIF, HEIC/HEIF (iOS/macOS)")}
 
 ${chalk.cyan("Popular Meme Templates:")}
   ${chalk.dim(

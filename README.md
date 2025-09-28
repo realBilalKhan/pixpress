@@ -17,6 +17,7 @@
 - **Preset** - Quick presets for common use cases
 - **Watermark** - Add watermarks with customizable positioning
 - **Batch Processing** - Process entire folders of images at once
+- **HEIC/HEIF Support** - Smart processing for iOS and macOS image formats
 
 ## Quick Start
 
@@ -29,7 +30,8 @@ pixpress
 
 # Or use specific commands directly
 pixpress info photo.jpg
-pixpress resize photo.jpg --width 800
+pixpress resize IMG_1234.heic --width 800
+pixpress convert IMG_5678.heic --format jpg
 pixpress meme --template drake --text "Old way" "New way"
 pixpress collage ./vacation-photos --layout grid
 ```
@@ -95,7 +97,8 @@ pixpress convert input.jpg -f png -o converted.png
 pixpress convert input.jpg -f jpg --filter vintage
 ```
 
-**Supported formats:** `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
+- **Supported input formats:** `jpg`, `jpeg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`, `heic`, `heif`
+- **Supported output formats:** `jpg`, `png`, `webp`, `tiff`, `gif`, `bmp`, `avif`
 
 ### Rotate & Flip Images
 
@@ -303,7 +306,10 @@ pixpress watermark input.jpg -w logo.png -p center --opacity 0.5 -o watermarked.
 Process entire folders of images with a single command. All operations support batch processing.
 
 ```bash
-# Resize all images in a folder
+# Convert all HEIC files to JPG
+pixpress batch convert ./photos --format jpg --include "*.heic,*.heif"
+
+# Resize all images
 pixpress batch resize ./photos --width 800 --height 600
 
 # Convert all images to WebP
@@ -337,8 +343,8 @@ pixpress batch resize ./photos --recursive --width 1200
 # Custom output folder
 pixpress batch convert ./images --format jpg --output ./converted
 
-# Include only specific file types
-pixpress batch convert ./mixed --format webp --include "*.png,*.tiff"
+# Include only HEIC files
+pixpress batch convert ./mixed --format jpg --include "*.heic,*.heif"
 
 # Exclude certain patterns
 pixpress batch resize ./photos --width 800 --exclude "*_thumb.*,*_small.*"
@@ -361,6 +367,26 @@ pixpress batch meme ./photos --template classic --text "WHEN YOU" "BATCH PROCESS
 - `--exclude <pattern>` - File patterns to exclude
 - `--dry-run` - Preview without processing
 - `-v, --verbose` - Show detailed progress
+
+**Default include patterns:** `*.jpg,*.jpeg,*.png,*.webp,*.tiff,*.gif,*.bmp,*.heic,*.heif`
+
+### HEIC/HEIF Processing
+
+Pixpress handles HEIC/HEIF smartly with built-in fallback:
+
+1. Tries Sharp’s native HEIF decoder first (fastest)
+2. If that fails, it automatically falls back the `heic-convert` library
+3. No extra setup needed — `heic-convert` is bundled as an optional dependency
+
+**Optional Performance Improvements:**
+
+```bash
+# For better native HEIF performance (macOS)
+brew install libheif
+
+# For better native HEIF performance (Ubuntu/Debian)
+sudo apt install libheif-dev
+```
 
 ## Global Options
 

@@ -17,7 +17,7 @@ export async function rotateCommand(input, options) {
   const spinner = ora("Rotating/flipping image...").start();
 
   try {
-    await validateInput(input);
+    const processedInputPath = await validateInput(input);
 
     const angle = options.angle ? parseInt(options.angle) : 0;
     const flipHorizontal = options.flipH || options.horizontal;
@@ -49,7 +49,7 @@ export async function rotateCommand(input, options) {
       options.output
     );
 
-    const metadata = await sharp(input).metadata();
+    const metadata = await sharp(processedInputPath).metadata();
 
     // Build operation description
     const operations = [];
@@ -59,7 +59,7 @@ export async function rotateCommand(input, options) {
 
     spinner.text = `Applying transformations: ${operations.join(", ")}`;
 
-    let pipeline = sharp(input);
+    let pipeline = sharp(processedInputPath);
 
     // Apply transformations in order: flip first, then rotate
     if (flipHorizontal) {
@@ -106,7 +106,7 @@ export async function rotateCommand(input, options) {
 
     // Get final metadata and file sizes
     const finalMetadata = await sharp(outputPath).metadata();
-    const inputSize = (await fs.stat(input)).size;
+    const inputSize = (await fs.stat(processedInputPath)).size;
     const outputSize = (await fs.stat(outputPath)).size;
 
     spinner.succeed(

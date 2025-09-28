@@ -9,7 +9,8 @@ export async function resizeCommand(input, options) {
   const spinner = ora("Processing image...").start();
 
   try {
-    await validateInput(input);
+    // validateInput returns the processed input path (may be converted from HEIC)
+    const processedInputPath = await validateInput(input);
 
     const width = options.width ? parseInt(options.width) : null;
     const height = options.height ? parseInt(options.height) : null;
@@ -19,14 +20,14 @@ export async function resizeCommand(input, options) {
       throw new Error("Please specify at least width or height");
     }
 
-    const outputPath = options.output || generateOutputPath(input, "_resized");
+    const outputPath = options.output || await generateOutputPath(input, "resized", "_resized");
 
-    const metadata = await sharp(input).metadata();
+    const metadata = await sharp(processedInputPath).metadata();
     spinner.text = `Resizing ${metadata.width}x${metadata.height} → ${
       width || "auto"
     }x${height || "auto"}`;
 
-    let pipeline = sharp(input);
+    let pipeline = sharp(processedInputPath);
 
     const resizeOptions = {
       width,
@@ -52,7 +53,7 @@ export async function resizeCommand(input, options) {
       chalk.green("✓ Image resized successfully!") +
         chalk.dim(
           `\n  Input: ${metadata.width}x${metadata.height} (${
-            (await sharp(input).stats()).size
+            (await sharp(processedInputPath).stats()).size
           } bytes)`
         ) +
         chalk.dim(

@@ -17,7 +17,7 @@ export async function filtersCommand(input, options) {
   const spinner = ora("Applying color filter...").start();
 
   try {
-    await validateInput(input);
+    const processedInputPath = await validateInput(input);
 
     const filterName = options.filter.toLowerCase();
     const availableFilters = getAllFilterNames();
@@ -36,10 +36,10 @@ export async function filtersCommand(input, options) {
       options.output
     );
 
-    const metadata = await sharp(input).metadata();
+    const metadata = await sharp(processedInputPath).metadata();
     spinner.text = `Applying ${filterName} filter to ${metadata.width}x${metadata.height} image`;
 
-    let pipeline = sharp(input);
+    let pipeline = sharp(processedInputPath);
 
     // Apply the selected filter
     pipeline = applyColorFilter(pipeline, filterName, options);
@@ -69,7 +69,7 @@ export async function filtersCommand(input, options) {
     await pipeline.toFile(outputPath);
 
     // Show results
-    const inputSize = (await fs.stat(input)).size;
+    const inputSize = (await fs.stat(processedInputPath)).size;
     const outputSize = (await fs.stat(outputPath)).size;
     const filterInfo = getFilterDescription(filterName);
 
