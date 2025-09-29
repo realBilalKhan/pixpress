@@ -4,7 +4,7 @@
   "description": "A powerful CLI tool for image processing with HEIC/HEIF support, batch processing, meme creation, and more",
   "main": "index.js",
   "bin": {
-    "pixpress": "./index.js"
+    "pixpress": "index.js"
   },
   "scripts": {
     "start": "node index.js",
@@ -34,7 +34,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/realBilalKhan/pixpress.git"
+    "url": "git+https://github.com/realBilalKhan/pixpress.git"
   },
   "bugs": {
     "url": "https://github.com/realBilalKhan/pixpress/issues"
