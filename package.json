@@ -1,6 +1,6 @@
 {
   "name": "pixpress",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A powerful CLI tool for image processing with HEIC/HEIF support, batch processing, meme creation, and more",
   "main": "index.js",
   "bin": {
