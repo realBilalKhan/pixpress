@@ -97,7 +97,8 @@ export async function batchCommand(operation, folder, options = {}) {
       imageFiles,
       operation,
       options,
-      outputDir
+      outputDir,
+      folder
     );
 
     // Show final results
@@ -364,7 +365,7 @@ function displayDryRunResults(imageFiles, operation, options, outputDir) {
   );
 }
 
-async function processBatch(imageFiles, operation, options, outputDir) {
+async function processBatch(imageFiles, operation, options, outputDir, folder) {
   const results = {
     successful: 0,
     failed: 0,
@@ -392,7 +393,7 @@ async function processBatch(imageFiles, operation, options, outputDir) {
       }
 
       // Prepare output path maintaining folder structure
-      const relativeDir = path.relative(process.cwd(), file.dir);
+      const relativeDir = path.relative(folder, file.dir);
       const outputFileDir = path.join(outputDir, relativeDir);
       await fs.ensureDir(outputFileDir);
 

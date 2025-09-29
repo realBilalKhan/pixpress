@@ -2,6 +2,7 @@
 import sharp from "sharp";
 import chalk from "chalk";
 import ora from "ora";
+import fs from "fs-extra";
 import { extname } from "path";
 import { validateInput, generateOutputPath, handleError } from "./helpers.js";
 
@@ -20,7 +21,9 @@ export async function resizeCommand(input, options) {
       throw new Error("Please specify at least width or height");
     }
 
-    const outputPath = options.output || await generateOutputPath(input, "resized", "_resized");
+    const outputPath =
+      options.output ||
+      (await generateOutputPath(input, "resized", "_resized"));
 
     const metadata = await sharp(processedInputPath).metadata();
     spinner.text = `Resizing ${metadata.width}x${metadata.height} → ${
@@ -48,18 +51,16 @@ export async function resizeCommand(input, options) {
 
     // Show detailed before/after comparison
     const finalMetadata = await sharp(outputPath).metadata();
+    const inputStats = await fs.stat(processedInputPath);
+    const outputStats = await fs.stat(outputPath);
 
     spinner.succeed(
       chalk.green("✓ Image resized successfully!") +
         chalk.dim(
-          `\n  Input: ${metadata.width}x${metadata.height} (${
-            (await sharp(processedInputPath).stats()).size
-          } bytes)`
+          `\n  Input: ${metadata.width}x${metadata.height} (${inputStats.size} bytes)`
         ) +
         chalk.dim(
-          `\n  Output: ${finalMetadata.width}x${finalMetadata.height} (${
-            (await sharp(outputPath).stats()).size
-          } bytes)`
+          `\n  Output: ${finalMetadata.width}x${finalMetadata.height} (${outputStats.size} bytes)`
         ) +
         chalk.dim(`\n  Saved to: ${outputPath}`)
     );
