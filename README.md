@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/2c6edfb898c87d2599fecfbbd5819aeeb9a4b925_screenshot_2025-09-29_at_11.34.30.png" alt="Demo Screenshot">
+  <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/142b06145c01b8d280f54b600c3e52cae1a9a8ef_a_20250929_133644_126d4c.jpg" alt="Demo Screenshot">
 </p>
 
 ## Table of Contents
