@@ -1,6 +1,7 @@
 // utils/interactive.js
 import inquirer from "inquirer";
 import chalk from "chalk";
+import path from "path";
 import pkg from "fs-extra";
 const { access, constants, stat } = pkg;
 import { resizeCommand } from "./resize.js";
@@ -17,6 +18,7 @@ import {
   getAvailableMemeTemplates,
   getMemeFilters,
 } from "./meme.js";
+import { getOperationDirectory, getPixpressDirectory } from "./helpers.js";
 
 // Helper function to validate file existence
 async function validateFilePath(filePath) {
@@ -1001,12 +1003,14 @@ async function processBatchImages() {
   let outputOptions = {};
 
   if (operation !== "info") {
+    const pixpressDir = getPixpressDirectory();
+    const defaultOutputPath = path.join(pixpressDir, "batch", operation);
     outputOptions = await inquirer.prompt([
       {
         type: "input",
         name: "output",
-        message: "Output folder (leave empty for ./processed):",
-        default: "./processed",
+        message: `Output folder (leave empty for ${defaultOutputPath}):`,
+        default: defaultOutputPath,
       },
       {
         type: "confirm",

@@ -11,7 +11,7 @@ import { watermarkCommand } from "./watermark.js";
 import { rotateCommand } from "./rotate.js";
 import { infoCommand } from "./info.js";
 import { filtersCommand, getAvailableFilters } from "./filters.js";
-import { getSupportedFormats, formatFileSize } from "./helpers.js";
+import { getSupportedFormats, formatFileSize, getOperationDirectory, getPixpressDirectory } from "./helpers.js";
 
 const supportedOperations = [
   "resize",
@@ -49,8 +49,9 @@ export async function batchCommand(operation, folder, options = {}) {
     // Validate operation-specific requirements
     validateOperationOptions(operation, options);
 
-    // Set up output directory
-    const outputDir = options.output || path.join(process.cwd(), "processed");
+    // Set up output directory using cross-platform saving logic with batch as top-level folder
+    const pixpressDir = getPixpressDirectory();
+    const outputDir = options.output || path.join(pixpressDir, "batch", operation);
     if (!options.dryRun) {
       await fs.ensureDir(outputDir);
     }
@@ -482,41 +483,44 @@ async function processBatch(imageFiles, operation, options, outputDir, folder) {
 }
 
 async function executeOperation(operation, inputPath, options) {
-  // Temporarily suppress console output for batch operations
-  const originalLog = console.log;
-  const originalError = console.error;
+  // For info operation, we want to show the analysis results
+  // For other operations, suppress console output to avoid cluttering batch output
+  if (operation !== "info") {
+    const originalLog = console.log;
+    const originalError = console.error;
 
-  console.log = () => {};
-  console.error = () => {};
+    console.log = () => {};
+    console.error = () => {};
 
-  try {
-    switch (operation) {
-      case "resize":
-        await resizeCommand(inputPath, options);
-        break;
-      case "convert":
-        await convertCommand(inputPath, options);
-        break;
-      case "filters":
-        await filtersCommand(inputPath, options);
-        break;
-      case "preset":
-        await presetCommand(inputPath, options);
-        break;
-      case "rotate":
-        await rotateCommand(inputPath, options);
-        break;
-      case "watermark":
-        await watermarkCommand(inputPath, options);
-        break;
-      case "info":
-        await infoCommand(inputPath, options);
-        break;
+    try {
+      switch (operation) {
+        case "resize":
+          await resizeCommand(inputPath, options);
+          break;
+        case "convert":
+          await convertCommand(inputPath, options);
+          break;
+        case "filters":
+          await filtersCommand(inputPath, options);
+          break;
+        case "preset":
+          await presetCommand(inputPath, options);
+          break;
+        case "rotate":
+          await rotateCommand(inputPath, options);
+          break;
+        case "watermark":
+          await watermarkCommand(inputPath, options);
+          break;
+      }
+    } finally {
+      // Restore console functions
+      console.log = originalLog;
+      console.error = originalError;
     }
-  } finally {
-    // Restore console functions
-    console.log = originalLog;
-    console.error = originalError;
+  } else {
+    // For info operation, allow console output to show analysis results
+    await infoCommand(inputPath, options);
   }
 }
 
