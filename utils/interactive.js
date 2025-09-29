@@ -1270,27 +1270,6 @@ async function getMemeOptions() {
     }
   }
 
-  // Social media caption
-  const { addCaption } = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "addCaption",
-      message: "Would you like to add a social media caption?",
-      default: false,
-    },
-  ]);
-
-  if (addCaption) {
-    const { caption } = await inquirer.prompt([
-      {
-        type: "input",
-        name: "caption",
-        message: "Enter social media caption:",
-      },
-    ]);
-    options.caption = caption;
-  }
-
   // Quality settings
   const { quality } = await inquirer.prompt([
     {
@@ -1305,20 +1284,6 @@ async function getMemeOptions() {
     },
   ]);
   options.quality = quality;
-
-  // Watermark option
-  const { watermark } = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "watermark",
-      message: "Add watermark to meme?",
-      default: true,
-    },
-  ]);
-
-  if (!watermark) {
-    options.watermark = false;
-  }
 
   return options;
 }

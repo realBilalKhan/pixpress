@@ -24,19 +24,19 @@ const memeTemplates = {
     textAreas: [
       {
         id: "reject",
-        x: 300,
-        y: 50,
-        width: 350,
-        height: 200,
+        x: 670, // Move right
+        y: 10, // Move down
+        width: 500, // Make wider
+        height: 200, // Make taller
         align: "center",
         valign: "middle",
       },
       {
         id: "approve",
-        x: 300,
-        y: 270,
-        width: 350,
-        height: 200,
+        x: 670, // Move right
+        y: 700, // Move down
+        width: 500, // Make wider
+        height: 200, // Make taller
         align: "center",
         valign: "middle",
       },
@@ -331,7 +331,7 @@ const textStyles = {
   },
   modern: {
     font: "Arial",
-    fontSize: 28,
+    fontSize: 36,
     strokeWidth: 0,
     fillColor: "white",
     backgroundColor: "rgba(0,0,0,0.75)",
@@ -467,11 +467,6 @@ export async function memeCommand(input, options) {
       image = await applyClassicMemeText(image, texts, style, metadata);
     }
 
-    // Add watermark if specified
-    if (options.watermark !== false) {
-      image = await addMemeWatermark(image, metadata);
-    }
-
     // Apply filters for extra effect
     if (options.filter) {
       image = applyMemeFilter(image, options.filter);
@@ -489,11 +484,6 @@ export async function memeCommand(input, options) {
     );
 
     displayOutputLocation(outputPath);
-
-    if (options.caption) {
-      console.log(chalk.cyan(`\n💬 Ready to post with caption:`));
-      console.log(chalk.white(`"${options.caption}"`));
-    }
   } catch (error) {
     handleError(spinner, error);
   }
@@ -907,36 +897,6 @@ function escapeXml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
-}
-
-async function addMemeWatermark(image, metadata) {
-  const watermarkText = "@PixpressMemes";
-  const { width, height } = metadata;
-
-  const watermarkSvg = `
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <text x="${width - 10}" y="${height - 10}" 
-            font-family="Arial" 
-            font-size="14px"
-            text-anchor="end"
-            fill="white"
-            opacity="0.5">
-        ${watermarkText}
-      </text>
-    </svg>
-  `;
-
-  const watermarkBuffer = await sharp(Buffer.from(watermarkSvg))
-    .png()
-    .toBuffer();
-
-  return image.composite([
-    {
-      input: watermarkBuffer,
-      top: 0,
-      left: 0,
-    },
-  ]);
 }
 
 function applyMemeFilter(image, filterName) {

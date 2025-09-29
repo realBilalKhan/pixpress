@@ -163,8 +163,6 @@ program
     "--filter <filter>",
     "Special effect: deepfry, vintage, cursed, glitch"
   )
-  .option("--caption <caption>", "Social media caption for the meme")
-  .option("--no-watermark", "Don't add watermark")
   .option("--list-templates", "List all available meme templates")
   .option("--list-styles", "List all text styles")
   .option("--list-filters", "List all meme filters")

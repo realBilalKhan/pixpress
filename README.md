@@ -1,9 +1,42 @@
 <h1 align="center">Pixpress</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/node-%3E%3D14.0.0-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js Version">
-  <img src="https://img.shields.io/npm/v/chess-arena?style=flat&logo=npm&logoColor=white&color=cb3837" alt="npm Version">
+  <i>Modern image processing that scales from single files to batch operations</i>
 </p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/node-%3E%3D14.0.0-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js Version">
+  <a href="https://www.npmjs.com/package/pixpress">
+    <img src="https://img.shields.io/npm/v/pixpress?style=flat&logo=npm&logoColor=white&color=cb3837" alt="npm Version">
+  </a>
+  <a href="https://github.com/realBilalKhan/pixpress/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/2c6edfb898c87d2599fecfbbd5819aeeb9a4b925_screenshot_2025-09-29_at_11.34.30.png" alt="Demo Screenshot">
+</p>
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Command Reference](#command-reference)
+  - [Analyze Images](#analyze-images)
+  - [Resize Images](#resize-images)
+  - [Convert Formats](#convert-formats)
+  - [Rotate & Flip Images](#rotate--flip-images)
+  - [Apply Color Filters & Effects](#apply-color-filters--effects)
+  - [Create Viral Memes](#create-viral-memes)
+  - [Create Photo Collages](#create-photo-collages)
+  - [Apply Presets](#apply-presets)
+  - [Add Watermarks](#add-watermarks)
+  - [Batch Processing](#batch-processing)
+  - [HEIC/HEIF Processing](#heicheif-processing)
+- [Global Options](#global-options)
+- [Output Directory](#output-directory)
+- [Requirements](#requirements)
 
 ## Features
 
@@ -181,8 +214,6 @@ pixpress meme photo.jpg --text "BOTTOM TEXT" --filter deepfry
 # Change text style
 pixpress meme photo.jpg --text "Modern meme" --style modern
 
-# Add social media caption
-pixpress meme --template stonks --text "Productivity" --caption "When you automate a 5-minute task after 3 hours of coding #developerlife"
 
 # List all available templates
 pixpress meme --list-templates
@@ -200,8 +231,6 @@ pixpress meme --tips
 - `text <text...>` - Text to add (multiple for different areas)
 - `style <style>` - Text style (default: impact)
 - `filter <filter>` - Special effect filter
-- `caption <text>` - Social media caption
-- `no-watermark` - Remove watermark
 - `quality <1-100>` - Output quality (default: 85)
 
 ### Create Photo Collages
@@ -419,3 +448,7 @@ Each file is saved with a unique timestamp to prevent overwrites:
 
 - Node.js >= 14.0.0
 - Supported on Windows, macOS, and Linux
+
+<p align="center">
+  <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/770cb534aa0eca629f1a242c48857ea21547cc5c_meme_meme_20250929_123057_e1a00c.jpg" alt="Meme generated with Pixpress">
+</p>
